@@ -16,6 +16,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="appsettings.Development.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\AutoLCPR.Application\AutoLCPR.Application.csproj" />
     <ProjectReference Include="..\AutoLCPR.Infrastructure\AutoLCPR.Infrastructure.csproj" />
   </ItemGroup>

@@ -1,30 +1,106 @@
 <Window x:Class="AutoLCPR.UI.WPF.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:AutoLCPR.UI.WPF.Views"
         Title="AutoLCPR - Sistema de Gestão Fiscal e Rebanho"
-        Height="600"
-        Width="900"
+        Height="700"
+        Width="1200"
         WindowStartupLocation="CenterScreen"
         Background="#F5F5F5">
     <Grid>
-        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-            <TextBlock Text="Bem-vindo ao AutoLCPR" 
-                       FontSize="32" 
-                       FontWeight="Bold" 
-                       Foreground="#333" 
-                       TextAlignment="Center" 
-                       Margin="0,0,0,20"/>
-            <TextBlock Text="Sistema de Gestão Fiscal e Rebanho Rural" 
-                       FontSize="16" 
-                       Foreground="#666" 
-                       TextAlignment="Center"
-                       Margin="0,0,0,40"/>
-            <ProgressBar Height="4" IsIndeterminate="True"/>
-            <TextBlock Text="Inicializando aplicação..." 
-                       FontSize="14" 
-                       Foreground="#999" 
-                       TextAlignment="Center" 
-                       Margin="0,20,0,0"/>
-        </StackPanel>
+        <!-- Navigation Sidebar -->
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="250"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Sidebar -->
+        <Border Grid.Column="0" Background="#2C3E50" Padding="0">
+            <StackPanel VerticalAlignment="Top">
+                <!-- Logo/Title -->
+                <Border Background="#1A252F" Padding="15">
+                    <TextBlock Text="AutoLCPR" 
+                               FontSize="18" 
+                               FontWeight="Bold" 
+                               Foreground="White"
+                               TextAlignment="Center"/>
+                </Border>
+
+                <!-- Menu Items -->
+                <StackPanel Margin="0,20,0,0">
+                    <!-- Home -->
+                    <Button Background="Transparent" 
+                            Foreground="White" 
+                            Padding="15,12" 
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Left"
+                            Cursor="Hand"
+                            BorderThickness="0">
+                        <TextBlock Text="🏠 Início"/>
+                    </Button>
+
+                    <!-- Rebanhos -->
+                    <Button Background="Transparent" 
+                            Foreground="White" 
+                            Padding="15,12" 
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Left"
+                            Cursor="Hand"
+                            BorderThickness="0">
+                        <TextBlock Text="🐄 Rebanhos"/>
+                    </Button>
+
+                    <!-- Fiscal -->
+                    <Button Background="Transparent" 
+                            Foreground="White" 
+                            Padding="15,12" 
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Left"
+                            Cursor="Hand"
+                            BorderThickness="0">
+                        <TextBlock Text="📄 Fiscal/Notas"/>
+                    </Button>
+
+                    <!-- Financeiro -->
+                    <Button Background="Transparent" 
+                            Foreground="White" 
+                            Padding="15,12" 
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Left"
+                            Cursor="Hand"
+                            BorderThickness="0">
+                        <TextBlock Text="💰 Financeiro"/>
+                    </Button>
+
+                    <!-- Relatórios -->
+                    <Button Background="Transparent" 
+                            Foreground="White" 
+                            Padding="15,12" 
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Left"
+                            Cursor="Hand"
+                            BorderThickness="0">
+                        <TextBlock Text="📊 Relatórios"/>
+                    </Button>
+
+                    <!-- Configurações -->
+                    <Button Background="Transparent" 
+                            Foreground="White" 
+                            Padding="15,12" 
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Left"
+                            Cursor="Hand"
+                            BorderThickness="0"
+                            Margin="0,40,0,0">
+                        <TextBlock Text="⚙️ Configurações"/>
+                    </Button>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- Main Content Area -->
+        <Grid Grid.Column="1">
+            <local:HomeView/>
+        </Grid>
     </Grid>
 </Window>
