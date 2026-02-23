@@ -1,0 +1,12 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^dotnet --version$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^powershell -Command \"Invoke-WebRequest https://dot\\.net/v1/dotnet-install\\.ps1 -OutFile dotnet-install\\.ps1; \\.\\\\dotnet-install\\.ps1 -Version 8\\.0 -InstallDir C:\\\\Program Files\\\\dotnet\"$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}
