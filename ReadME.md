@@ -73,6 +73,84 @@ UI → Application → Domain → Infrastructure → SQLite
 - Backup manual e automático
 
 ---
+## 🧱 Diagrama de Classes
+
+```mermaid
+classDiagram
+    class Produtor {
+        +int Id
+        +String Nome
+        +List~Rebanho~ rebanho
+        +List~NotaFiscal~ receitas
+        +List~NotaFiscal~ despesas
+
+    }
+
+    class NotaFiscal {
+        +String numero
+        +String chaveAcesso
+        +double valor
+        +Date dataEmissao
+        +String nomeEmitente
+        +String nomeDestinatario
+        +String documentoEmitente
+        +String documentoDestinatario
+    }
+
+    class Rebanho {
+        +String inscricao
+        +int nascimentos
+        +int mortes
+        +int entradas
+        +int saidas
+    }
+
+    class tipoNota {
+        <<<enumeration>>>
+        RECEITA
+        DESPESA
+    }
+```
+## ↔️ Diagrama ER
+
+```mermaid
+erDiagram
+    PRODUTOR ||--o{ REBANHO : "possui"
+    PRODUTOR ||--o{ NOTA_FISCAL : "gera"
+    TIPO_NOTA ||--o{ NOTA_FISCAL : "classifica"
+
+    PRODUTOR {
+        int id PK
+        string nome
+    }
+
+    NOTA_FISCAL {
+        string chave_acesso PK
+        string numero
+        double valor
+        date data_emissao
+        string nome_emitente
+        string nome_destinatario
+        string documento_emitente
+        string documento_destinatario
+        int id_produtor FK
+        int id_tipo_nota FK
+    }
+
+    REBANHO {
+        string inscricao PK
+        int nascimentos
+        int mortes
+        int entradas
+        int saidas
+        int id_produtor FK
+    }
+
+    TIPO_NOTA {
+        int id PK
+        string descricao "RECEITA ou DESPESA"
+    }
+```
 
 ## 🚀 Status do Projeto
 

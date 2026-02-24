@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using AutoLCPR.Infrastructure;
+using AutoLCPR.Infrastructure.Data;
 
 class Program
 {
@@ -18,8 +18,13 @@ class Program
                 Console.WriteLine($"  - {row["TABLE_NAME"]}");
             }
 
-            var despesasCount = await context.Despesas.CountAsync();
-            Console.WriteLine($"\nRegistros em Despesas: {despesasCount}");
+            var produtoresCount = await context.Produtores.CountAsync();
+            var rebanhosCount = await context.Rebanhos.CountAsync();
+            var notasFiscaisCount = await context.NotasFiscais.CountAsync();
+            
+            Console.WriteLine($"\nRegistros em Produtores: {produtoresCount}");
+            Console.WriteLine($"Registros em Rebanhos: {rebanhosCount}");
+            Console.WriteLine($"Registros em NotasFiscais: {notasFiscaisCount}");
         }
     }
 }
