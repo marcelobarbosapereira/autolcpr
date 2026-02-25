@@ -1,0 +1,66 @@
+<Window x:Class="AutoLCPR.UI.WPF.Views.ConfirmacaoExclusaoWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="Confirmação de Exclusão" 
+    WindowStartupLocation="CenterScreen"
+    Width="450" Height="400"
+    Background="#F8F9FA"
+    ResizeMode="NoResize"
+    ShowInTaskbar="False"
+    WindowStyle="None"
+    BorderBrush="#E8EAED"
+    BorderThickness="1"
+    KeyDown="WindowKeyDown">
+    
+    <Border Background="White" BorderBrush="#E8EAED" BorderThickness="1" CornerRadius="8">
+        <Grid Background="White">
+        <StackPanel Margin="30" VerticalAlignment="Center">
+            <!-- Icon and Message -->
+            <StackPanel HorizontalAlignment="Center" Margin="0,0,0,20">
+                <TextBlock Text="⚠" FontSize="48" Foreground="#D5433E" TextAlignment="Center" Margin="0,0,0,15"/>
+                <TextBlock x:Name="MensagemTextBlock"
+                           Text="Deseja realmente EXCLUIR o item selecionado?" 
+                           FontSize="16" 
+                           FontWeight="SemiBold" 
+                           Foreground="#202124" 
+                           TextAlignment="Center"
+                           Margin="0,0,0,20"/>
+            </StackPanel>
+
+            <!-- Producer Name -->
+            <Border Background="#FFF3CD" BorderBrush="#FFC107" BorderThickness="1" CornerRadius="4" Padding="15" Margin="0,0,0,30">
+                <StackPanel>
+                    <TextBlock Text="Produtor:" FontSize="12" Foreground="#856404" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                    <TextBlock x:Name="ProdutorNameTextBlock" 
+                               Text=""
+                               FontSize="14" 
+                               Foreground="#202124" 
+                               FontWeight="SemiBold"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Buttons -->
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Height="40">
+                <Button Content="Não" Width="120" FontSize="13" FontWeight="SemiBold" Cursor="Hand" Click="NaoClick" Foreground="#202124" Margin="0,0,15,0">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="White" BorderBrush="#E8EAED" BorderThickness="1" CornerRadius="4" Padding="{TemplateBinding Padding}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+                <Button Content="Sim" Width="120" Background="#D5433E" Foreground="White" FontSize="13" FontWeight="SemiBold" Cursor="Hand" Click="SimClick">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}" CornerRadius="4" Padding="{TemplateBinding Padding}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+    </Border>
+</Window>

@@ -1,0 +1,190 @@
+<UserControl x:Class="AutoLCPR.UI.WPF.Views.RebanhoView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="#F8F9FA">
+    <StackPanel Margin="20,15"
+                MaxWidth="900">
+            <!-- Header -->
+            <Border Background="White" BorderBrush="#E8EAED" BorderThickness="0,0,0,1" Padding="15,12" Margin="0,0,0,15">
+                <TextBlock 
+                           FontSize="24" 
+                           FontWeight="SemiBold" 
+                           Foreground="#202124" HorizontalAlignment="Center"><Run Language="pt-br" Text="Cadastrar Propriedade"/></TextBlock>
+            </Border>
+
+            <!-- Form Container -->
+            <Border Background="White" 
+                    BorderBrush="#E8EAED" 
+                    BorderThickness="1"
+                    Padding="20"
+                    CornerRadius="8">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <!-- ID do Rebanho -->
+                    <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,10,20">
+                        <TextBlock 
+                                   FontSize="14" 
+                                   FontWeight="SemiBold" 
+                                   Foreground="#202124"
+                                   Margin="0,0,0,8"><Run Language="pt-br" Text="Inscricao"/></TextBlock>
+                        <Border BorderBrush="#DADCE0" BorderThickness="1" CornerRadius="4">
+                            <TextBox Text="{Binding IdRebanho, UpdateSourceTrigger=PropertyChanged}"
+                                     Height="40"
+                                     Padding="12,10"
+                                     FontSize="14"
+                                     Background="White"
+                                     BorderThickness="0"
+                                     Foreground="#202124"/>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Nome do Rebanho -->
+                    <StackPanel Grid.Row="1" Grid.Column="1" Margin="10,0,0,20">
+                        <TextBlock 
+                                   FontSize="14" 
+                                   FontWeight="SemiBold" 
+                                   Foreground="#202124"
+                                   Margin="0,0,0,8"><Run Language="pt-br" Text="Nome da Propriedade"/></TextBlock>
+                        <Border BorderBrush="#DADCE0" BorderThickness="1" CornerRadius="4">
+                            <TextBox Text="{Binding NomeRebanho, UpdateSourceTrigger=PropertyChanged}"
+                                     Height="40"
+                                     Padding="12,10"
+                                     FontSize="14"
+                                     Background="White"
+                                     BorderThickness="0"
+                                     Foreground="#202124"/>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Mortes -->
+                    <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,10,20">
+                        <TextBlock Text="Mortes" 
+                                   FontSize="14" 
+                                   FontWeight="SemiBold" 
+                                   Foreground="#202124"
+                                   Margin="0,0,0,8"/>
+                        <Border BorderBrush="#DADCE0" BorderThickness="1" CornerRadius="4">
+                            <TextBox Text="{Binding Mortes, UpdateSourceTrigger=PropertyChanged}"
+                                     Height="40"
+                                     Padding="12,10"
+                                     FontSize="14"
+                                     Background="White"
+                                     BorderThickness="0"
+                                     Foreground="#202124"/>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Nascimentos -->
+                    <StackPanel Grid.Row="2" Grid.Column="1" Margin="10,0,0,20">
+                        <TextBlock Text="Nascimentos" 
+                                   FontSize="14" 
+                                   FontWeight="SemiBold" 
+                                   Foreground="#202124"
+                                   Margin="0,0,0,8"/>
+                        <Border BorderBrush="#DADCE0" BorderThickness="1" CornerRadius="4">
+                            <TextBox Text="{Binding Nascimentos, UpdateSourceTrigger=PropertyChanged}"
+                                     Height="40"
+                                     Padding="12,10"
+                                     FontSize="14"
+                                     Background="White"
+                                     BorderThickness="0"
+                                     Foreground="#202124"/>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Entradas -->
+                    <StackPanel Grid.Row="3" Grid.Column="0" Margin="0,0,10,20">
+                        <TextBlock Text="Entradas" 
+                                   FontSize="14" 
+                                   FontWeight="SemiBold" 
+                                   Foreground="#202124"
+                                   Margin="0,0,0,8"/>
+                        <Border BorderBrush="#DADCE0" BorderThickness="1" CornerRadius="4">
+                            <TextBox Text="{Binding Entradas, UpdateSourceTrigger=PropertyChanged}"
+                                     Height="40"
+                                     Padding="12,10"
+                                     FontSize="14"
+                                     Background="White"
+                                     BorderThickness="0"
+                                     Foreground="#202124"/>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Saídas -->
+                    <StackPanel Grid.Row="3" Grid.Column="1" Margin="10,0,0,20">
+                        <TextBlock Text="Saídas" 
+                                   FontSize="14" 
+                                   FontWeight="SemiBold" 
+                                   Foreground="#202124"
+                                   Margin="0,0,0,8"/>
+                        <Border BorderBrush="#DADCE0" BorderThickness="1" CornerRadius="4">
+                            <TextBox Text="{Binding Saidas, UpdateSourceTrigger=PropertyChanged}"
+                                     Height="40"
+                                     Padding="12,10"
+                                     FontSize="14"
+                                     Background="White"
+                                     BorderThickness="0"
+                                     Foreground="#202124"/>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Buttons -->
+                    <StackPanel Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2" 
+                                Orientation="Horizontal" 
+                                HorizontalAlignment="Center"
+                                Margin="0,20,0,0">
+                        <Border BorderThickness="0" CornerRadius="4" Background="#1F73E6" Margin="0,0,10,0">
+                            <Button Command="{Binding SalvarCommand}"
+                                    Content="Salvar"
+                                    Height="40"
+                                    Width="120"
+                                    Padding="20,8"
+                                    FontSize="14"
+                                    FontWeight="SemiBold"
+                                    Foreground="White"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    Cursor="Hand"/>
+                        </Border>
+                        <Border BorderThickness="1" CornerRadius="4" BorderBrush="#1F73E6">
+                            <Button Command="{Binding LimparCommand}"
+                                    Content="Limpar"
+                                    Height="40"
+                                    Width="120"
+                                    Padding="20,8"
+                                    FontSize="14"
+                                    FontWeight="SemiBold"
+                                    Foreground="#1F73E6"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    Cursor="Hand"/>
+                        </Border>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Info Box -->
+            <Border Background="#E8F0FE" 
+                    BorderBrush="#B4C7E7" 
+                    BorderThickness="1"
+                    Padding="12"
+                    CornerRadius="4"
+                    Margin="0,15,0,0">
+                <TextBlock Text="Preencha o ID e nome do rebanho, e informe os dados de mortes, nascimentos, entradas e saídas." 
+                           FontSize="12" 
+                           Foreground="#1652AA"
+                           TextWrapping="Wrap"/>
+            </Border>
+    </StackPanel>
+</UserControl>

@@ -5,7 +5,7 @@ namespace AutoLCPR.Domain.Entities
     /// </summary>
     public enum TipoNota
     {
-        Receita = 0,
-        Despesa = 1
+        Entrada = 0,
+        Saida = 1
     }
 }

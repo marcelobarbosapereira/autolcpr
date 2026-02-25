@@ -3,6 +3,7 @@ using System.IO;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using AutoLCPR.Infrastructure.Data;
+using AutoLCPR.UI.WPF.Services;
 
 namespace AutoLCPR.UI.WPF
 {
@@ -11,10 +12,76 @@ namespace AutoLCPR.UI.WPF
         private IServiceProvider? _serviceProvider;
         private IConfiguration? _configuration;
 
+        public IServiceProvider ServiceProvider
+        {
+            get
+            {
+                if (_serviceProvider == null)
+                {
+                    throw new InvalidOperationException("ServiceProvider ainda nao foi inicializado.");
+                }
+
+                return _serviceProvider;
+            }
+        }
+
         public App()
         {
-            InitializeConfiguration();
-            InitializeServices();
+            this.DispatcherUnhandledException += App_DispatcherUnhandledException;
+            AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
+            
+            try
+            {
+                InitializeConfiguration();
+                InitializeServices();
+            }
+            catch (Exception ex)
+            {
+                LogCriticalError("Erro durante inicialização da aplicação", ex);
+                MessageBox.Show(
+                    $"Erro crítico durante inicialização:\n\n{ex.Message}\n\n{ex.InnerException?.Message}",
+                    "Erro de Inicialização",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+                throw;
+            }
+        }
+
+        private void App_DispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
+        {
+            LogCriticalError("Exceção não tratada no Dispatcher", e.Exception);
+            MessageBox.Show(
+                $"Erro não tratado:\n\n{e.Exception.Message}",
+                "Erro",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+            e.Handled = false;
+        }
+
+        private void CurrentDomain_UnhandledException(object sender, System.UnhandledExceptionEventArgs e)
+        {
+            var ex = e.ExceptionObject as Exception;
+            LogCriticalError("Exceção não tratada no domínio de aplicação", ex);
+        }
+
+        private void LogCriticalError(string message, Exception? ex)
+        {
+            try
+            {
+                SimpleLogger.LogError(message, ex);
+            }
+            catch
+            {
+                // Se o SimpleLogger falhar, pelo menos tentar escrever um arquivo
+                try
+                {
+                    var logDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "AutoLCPR");
+                    Directory.CreateDirectory(logDir);
+                    var logPath = Path.Combine(logDir, "error.log");
+                    File.AppendAllText(logPath, $"\n{DateTime.Now:yyyy-MM-dd HH:mm:ss} - {message}\n{ex}\n");
+                }
+                catch { }
+            }
         }
 
         /// <summary>
@@ -102,40 +169,36 @@ namespace AutoLCPR.UI.WPF
                                 }
                                 catch (Exception ex)
                                 {
-                                    MessageBox.Show(
+                                    AlertService.Show(
                                         $"Erro ao aplicar migrations: {ex.InnerException?.Message ?? ex.Message}",
-                                        "Erro de Migração",
-                                        MessageBoxButton.OK,
-                                        MessageBoxImage.Error);
+                                        "Erro de Migracao",
+                                        AlertType.Error);
                                 }
                             }
                             else
                             {
-                                MessageBox.Show(
-                                    "Falha ao conectar ao banco de dados. Verifique a configuração.",
-                                    "Erro de Conexão",
-                                    MessageBoxButton.OK,
-                                    MessageBoxImage.Error);
+                                AlertService.Show(
+                                    "Falha ao conectar ao banco de dados. Verifique a configuracao.",
+                                    "Erro de Conexao",
+                                    AlertType.Error);
                             }
                         }
                         catch (Exception ex)
                         {
-                            MessageBox.Show(
-                                $"Erro durante teste de conexão: {ex.InnerException?.Message ?? ex.Message}",
+                            AlertService.Show(
+                                $"Erro durante teste de conexao: {ex.InnerException?.Message ?? ex.Message}",
                                 "Erro",
-                                MessageBoxButton.OK,
-                                MessageBoxImage.Error);
+                                AlertType.Error);
                         }
                     }
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
-                    $"Erro ao inicializar serviços: {ex.Message}",
+                AlertService.Show(
+                    $"Erro ao inicializar servicos: {ex.Message}",
                     "Erro",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                    AlertType.Error);
             }
         }
     }

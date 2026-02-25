@@ -7,15 +7,14 @@ namespace AutoLCPR.Domain.Entities
     /// </summary>
     public class NotaFiscal : BaseEntity
     {
-        public required string ChaveAcesso { get; set; }
-        public required string NumeroNotaFiscal { get; set; }
-        public decimal ValorNotaFiscal { get; set; }
-        public DateTime DataEmissao { get; set; }
-        public required string NomeEmitente { get; set; }
-        public required string NomeDestinatario { get; set; }
-        public required string DocumentoEmitente { get; set; }
-        public required string DocumentoDestinatario { get; set; }
-        public TipoNota TipoNota { get; set; }
+        public string? ChaveAcesso { get; set; }
+        public required DateTime DataEmissao { get; set; }
+        public required string NumeroDaNota { get; set; }
+        public required decimal ValorNotaFiscal { get; set; }
+        public required string Origem { get; set; }
+        public required string Destino { get; set; }
+        public required string Descricao { get; set; }
+        public TipoNota TipoNota { get; set; } = TipoNota.Saida;
 
         // Relacionamento com Produtor
         public int ProdutorId { get; set; }
