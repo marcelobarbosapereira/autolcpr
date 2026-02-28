@@ -4,7 +4,6 @@
              Background="#F8F9FA">
     <ScrollViewer>
         <StackPanel Margin="30">
-            <!-- Header -->
             <Border Background="White" BorderBrush="#E8EAED" BorderThickness="0,0,0,1" Padding="20,15" Margin="0,0,0,20">
                 <TextBlock Text="Relatórios" 
                            FontSize="24" 
@@ -12,33 +11,132 @@
                            Foreground="#202124"/>
             </Border>
 
-            <!-- Placeholder para futura implementação -->
-            <Border Background="White" 
-                    BorderBrush="#E8EAED" 
-                    BorderThickness="1"
-                    Padding="40"
-                    CornerRadius="8"
-                    Margin="0,20,0,0">
-                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                    <TextBlock Text="📊 Relatórios Avançados" 
-                               FontSize="20" 
-                               FontWeight="SemiBold" 
-                               Foreground="#202124"
-                               TextAlignment="Center"
-                               Margin="0,0,0,15"/>
-                    <TextBlock Text="Esta seção será utilizada para análises e relatórios detalhados sobre as operações fiscais e do rebanho." 
-                               FontSize="14" 
-                               Foreground="#5F6368"
-                               TextAlignment="Center"
-                               TextWrapping="Wrap"
-                               MaxWidth="400"
-                               Margin="0,0,0,20"/>
-                    <TextBlock Text="Para visualizar despesas, receitas e rebanho em tempo real, acesse a Dashboard." 
-                               FontSize="12" 
-                               Foreground="#9AA0A6"
-                               TextAlignment="Center"
-                               TextWrapping="Wrap"
-                               MaxWidth="400"/>
+            <Border Background="White" BorderBrush="#E8EAED" BorderThickness="1" Padding="20" CornerRadius="8">
+                <StackPanel>
+                    <WrapPanel Margin="0,0,0,12">
+                        <StackPanel Margin="0,0,15,10" Width="140">
+                            <TextBlock Text="Ano" Margin="0,0,0,8" Foreground="#202124" FontWeight="SemiBold"/>
+                            <TextBox Text="{Binding AnoFiltro, UpdateSourceTrigger=PropertyChanged}" Height="36" Padding="8,6"/>
+                        </StackPanel>
+
+                        <StackPanel Margin="0,0,15,10" Width="170">
+                            <TextBlock Text="Data Inicial" Margin="0,0,0,8" Foreground="#202124" FontWeight="SemiBold"/>
+                            <DatePicker SelectedDate="{Binding DataInicio}" Height="36"/>
+                        </StackPanel>
+
+                        <StackPanel Margin="0,0,15,10" Width="170">
+                            <TextBlock Text="Data Final" Margin="0,0,0,8" Foreground="#202124" FontWeight="SemiBold"/>
+                            <DatePicker SelectedDate="{Binding DataFim}" Height="36"/>
+                        </StackPanel>
+
+                        <StackPanel Margin="0,0,15,10" Width="220">
+                            <TextBlock Text="Relatório para Exportação" Margin="0,0,0,8" Foreground="#202124" FontWeight="SemiBold"/>
+                            <ComboBox ItemsSource="{Binding TiposRelatorioExportacao}"
+                                      SelectedItem="{Binding RelatorioSelecionado}"
+                                      Height="36"/>
+                        </StackPanel>
+                    </WrapPanel>
+
+                    <WrapPanel HorizontalAlignment="Right" ItemHeight="36">
+                        <Button Command="{Binding AtualizarRelatoriosCommand}"
+                                Content="Atualizar"
+                                Height="36"
+                                Width="120"
+                                Margin="0,0,10,10"
+                                Background="#1F71E7"
+                                Foreground="White"
+                                BorderBrush="#1F71E7"/>
+
+                        <Button Command="{Binding ExportarPdfCommand}"
+                                Content="Exportar PDF"
+                                Height="36"
+                                Width="120"
+                                Margin="0,0,10,10"
+                                Background="#5F6368"
+                                Foreground="White"
+                                BorderBrush="#5F6368"/>
+
+                        <Button Command="{Binding ExportarExcelCommand}"
+                                Content="Exportar Excel"
+                                Height="36"
+                                Width="120"
+                                Margin="0,0,0,10"
+                                Background="#188038"
+                                Foreground="White"
+                                BorderBrush="#188038"/>
+                    </WrapPanel>
+                </StackPanel>
+            </Border>
+
+            <Border Background="White" BorderBrush="#E8EAED" BorderThickness="1" Padding="20" CornerRadius="8" Margin="0,20,0,0">
+                <StackPanel>
+                    <TextBlock Text="Relatório mensal de receitas" FontSize="16" FontWeight="SemiBold" Foreground="#202124" Margin="0,0,0,10"/>
+                    <DataGrid ItemsSource="{Binding ReceitasMensais}" AutoGenerateColumns="False" CanUserAddRows="False" Height="220">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Mês" Binding="{Binding Mes}" Width="*"/>
+                            <DataGridTextColumn Header="Total" Binding="{Binding Total, StringFormat={}{0:C}}" Width="200"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </StackPanel>
+            </Border>
+
+            <Border Background="White" BorderBrush="#E8EAED" BorderThickness="1" Padding="20" CornerRadius="8" Margin="0,20,0,0">
+                <StackPanel>
+                    <TextBlock Text="Relatório mensal de despesas" FontSize="16" FontWeight="SemiBold" Foreground="#202124" Margin="0,0,0,10"/>
+                    <DataGrid ItemsSource="{Binding DespesasMensais}" AutoGenerateColumns="False" CanUserAddRows="False" Height="220">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Mês" Binding="{Binding Mes}" Width="*"/>
+                            <DataGridTextColumn Header="Total" Binding="{Binding Total, StringFormat={}{0:C}}" Width="200"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </StackPanel>
+            </Border>
+
+            <Border Background="White" BorderBrush="#E8EAED" BorderThickness="1" Padding="20" CornerRadius="8" Margin="0,20,0,0">
+                <StackPanel>
+                    <TextBlock Text="Relatório anual consolidado" FontSize="16" FontWeight="SemiBold" Foreground="#202124" Margin="0,0,0,10"/>
+                    <DataGrid ItemsSource="{Binding ConsolidadoAnual}" AutoGenerateColumns="False" CanUserAddRows="False" Height="220">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Ano" Binding="{Binding Ano}" Width="120"/>
+                            <DataGridTextColumn Header="Receitas" Binding="{Binding Receitas, StringFormat={}{0:C}}" Width="200"/>
+                            <DataGridTextColumn Header="Despesas" Binding="{Binding Despesas, StringFormat={}{0:C}}" Width="200"/>
+                            <DataGridTextColumn Header="Saldo" Binding="{Binding Saldo, StringFormat={}{0:C}}" Width="200"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </StackPanel>
+            </Border>
+
+            <Border Background="White" BorderBrush="#E8EAED" BorderThickness="1" Padding="20" CornerRadius="8" Margin="0,20,0,0">
+                <StackPanel>
+                    <TextBlock Text="Relatório por Inscrição Estadual" FontSize="16" FontWeight="SemiBold" Foreground="#202124" Margin="0,0,0,10"/>
+                    <DataGrid ItemsSource="{Binding RelatorioPorInscricaoEstadual}" AutoGenerateColumns="False" CanUserAddRows="False" Height="220">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Inscrição Estadual" Binding="{Binding InscricaoEstadual}" Width="200"/>
+                            <DataGridTextColumn Header="Produtor" Binding="{Binding Produtor}" Width="*"/>
+                            <DataGridTextColumn Header="Receitas" Binding="{Binding Receitas, StringFormat={}{0:C}}" Width="170"/>
+                            <DataGridTextColumn Header="Despesas" Binding="{Binding Despesas, StringFormat={}{0:C}}" Width="170"/>
+                            <DataGridTextColumn Header="Saldo" Binding="{Binding Saldo, StringFormat={}{0:C}}" Width="170"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </StackPanel>
+            </Border>
+
+            <Border Background="White" BorderBrush="#E8EAED" BorderThickness="1" Padding="20" CornerRadius="8" Margin="0,20,0,0">
+                <StackPanel>
+                    <TextBlock Text="Relatório de saldo de rebanho" FontSize="16" FontWeight="SemiBold" Foreground="#202124" Margin="0,0,0,10"/>
+                    <DataGrid ItemsSource="{Binding SaldoRebanho}" AutoGenerateColumns="False" CanUserAddRows="False" Height="260">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Inscrição Estadual" Binding="{Binding InscricaoEstadual}" Width="180"/>
+                            <DataGridTextColumn Header="Produtor" Binding="{Binding Produtor}" Width="220"/>
+                            <DataGridTextColumn Header="ID Rebanho" Binding="{Binding IdRebanho}" Width="120"/>
+                            <DataGridTextColumn Header="Nome Rebanho" Binding="{Binding NomeRebanho}" Width="220"/>
+                            <DataGridTextColumn Header="Entradas" Binding="{Binding Entradas}" Width="90"/>
+                            <DataGridTextColumn Header="Nascimentos" Binding="{Binding Nascimentos}" Width="110"/>
+                            <DataGridTextColumn Header="Saídas" Binding="{Binding Saidas}" Width="90"/>
+                            <DataGridTextColumn Header="Mortes" Binding="{Binding Mortes}" Width="90"/>
+                            <DataGridTextColumn Header="Saldo" Binding="{Binding Saldo}" Width="90"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
                 </StackPanel>
             </Border>
         </StackPanel>

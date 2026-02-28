@@ -8,6 +8,7 @@ namespace AutoLCPR.Domain.Entities
     public class Produtor : BaseEntity
     {
         public required string Nome { get; set; }
+        public required string InscricaoEstadual { get; set; }
 
         // Relacionamentos
         public virtual ICollection<Rebanho> Rebanhos { get; set; } = new List<Rebanho>();
