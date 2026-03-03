@@ -50,7 +50,7 @@ namespace AutoLCPR.UI.WPF.ViewModels
 
         public ProdutorViewModel()
         {
-            _serviceProvider = (Application.Current as App)?.ServiceProvider;
+            _serviceProvider = (System.Windows.Application.Current as App)?.ServiceProvider;
             SalvarCommand = new RelayCommand(Salvar, CanSalvar);
             LimparCommand = new RelayCommand(Limpar);
         }
@@ -107,7 +107,11 @@ namespace AutoLCPR.UI.WPF.ViewModels
                         return;
                     }
 
-                    await repo.AddAsync(new Produtor { Nome = nome });
+                    await repo.AddAsync(new Produtor
+                    {
+                        Nome = nome,
+                        InscricaoEstadual = $"NAO-INFORMADA-{DateTime.UtcNow:yyyyMMddHHmmssfff}"
+                    });
                     AlertService.Show($"Produtor '{nome}' cadastrado com sucesso!", "Sucesso", AlertType.Success);
                 }
                 

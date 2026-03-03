@@ -18,7 +18,7 @@ namespace AutoLCPR.UI.WPF.Services
             var window = new AlertWindow(title, message, type);
             
             // Apenas definir Owner se a MainWindow existe e foi exibida
-            var mainWindow = Application.Current?.MainWindow;
+            var mainWindow = System.Windows.Application.Current?.MainWindow;
             if (mainWindow != null && mainWindow.IsLoaded)
             {
                 window.Owner = mainWindow;

@@ -186,7 +186,7 @@ namespace AutoLCPR.UI.WPF.ViewModels
         /// </summary>
         public HomeViewModel()
         {
-            _serviceProvider = (Application.Current as App)?.ServiceProvider;
+            _serviceProvider = (System.Windows.Application.Current as App)?.ServiceProvider;
 
             // Inicializar comandos
             SelecionarReceitasCommand = new RelayCommand(() => FiltroSelecionado = "Receitas");

@@ -152,7 +152,7 @@ namespace AutoLCPR.UI.WPF.ViewModels
 
         public RebanhoViewModel()
         {
-            _serviceProvider = (Application.Current as App)?.ServiceProvider;
+            _serviceProvider = (System.Windows.Application.Current as App)?.ServiceProvider;
             SalvarCommand = new RelayCommand(async () => await SalvarAsync(), CanSalvar);
             LimparCommand = new RelayCommand(Limpar);
         }

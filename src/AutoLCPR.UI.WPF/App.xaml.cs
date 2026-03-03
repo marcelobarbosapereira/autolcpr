@@ -7,7 +7,7 @@ using AutoLCPR.UI.WPF.Services;
 
 namespace AutoLCPR.UI.WPF
 {
-    public partial class App : Application
+    public partial class App : System.Windows.Application
     {
         private IServiceProvider? _serviceProvider;
         private IConfiguration? _configuration;
@@ -136,6 +136,7 @@ namespace AutoLCPR.UI.WPF
             // Registrar serviços de infraestrutura
             var connectionString = ResolveConnectionString();
             services.AddInfrastructureServices(connectionString);
+            AutoLCPR.Application.DependencyInjectionExtensions.AddApplicationServices(services);
 
             _serviceProvider = services.BuildServiceProvider();
 
@@ -203,4 +204,3 @@ namespace AutoLCPR.UI.WPF
         }
     }
 }
-

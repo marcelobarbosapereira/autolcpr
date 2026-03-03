@@ -12,33 +12,106 @@
                            Foreground="#202124"/>
             </Border>
 
-            <!-- Placeholder para futura implementação -->
             <Border Background="White" 
                     BorderBrush="#E8EAED" 
                     BorderThickness="1"
-                    Padding="40"
+                    Padding="24"
                     CornerRadius="8"
                     Margin="0,20,0,0">
-                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                    <TextBlock Text="📊 Relatórios Avançados" 
-                               FontSize="20" 
+                <StackPanel>
+                    <TextBlock Text="Relatório Consolidado Anual - Livro Caixa" 
+                               FontSize="18" 
                                FontWeight="SemiBold" 
                                Foreground="#202124"
-                               TextAlignment="Center"
-                               Margin="0,0,0,15"/>
-                    <TextBlock Text="Esta seção será utilizada para análises e relatórios detalhados sobre as operações fiscais e do rebanho." 
-                               FontSize="14" 
-                               Foreground="#5F6368"
-                               TextAlignment="Center"
-                               TextWrapping="Wrap"
-                               MaxWidth="400"
                                Margin="0,0,0,20"/>
-                    <TextBlock Text="Para visualizar despesas, receitas e rebanho em tempo real, acesse a Dashboard." 
-                               FontSize="12" 
-                               Foreground="#9AA0A6"
-                               TextAlignment="Center"
-                               TextWrapping="Wrap"
-                               MaxWidth="400"/>
+
+                    <TextBlock Text="Ano Base" 
+                               FontSize="13" 
+                               FontWeight="SemiBold" 
+                               Foreground="#202124"/>
+                    <TextBox Text="{Binding AnoFiscal, UpdateSourceTrigger=PropertyChanged}" 
+                             Width="180"
+                             Height="34"
+                             Margin="0,8,0,0"
+                             Padding="10,6"/>
+
+                    <Button Content="Gerar Relatório em PDF"
+                            Command="{Binding GerarRelatorioCommand}"
+                            Width="220"
+                            Height="36"
+                            Margin="0,16,0,0"
+                            HorizontalAlignment="Left"
+                            Background="#1A73E8"
+                            Foreground="White"
+                            BorderBrush="#1A73E8"
+                            FontWeight="SemiBold"
+                            Cursor="Hand"/>
+
+                            <Button Content="Gerar Relatório de Rebanho"
+                                Command="{Binding GerarRelatorioRebanhoCommand}"
+                                Width="220"
+                                Height="36"
+                                Margin="0,10,0,0"
+                                HorizontalAlignment="Left"
+                                Background="#0F9D58"
+                                Foreground="White"
+                                BorderBrush="#0F9D58"
+                                FontWeight="SemiBold"
+                                Cursor="Hand"/>
+
+                    <TextBlock Text="{Binding Status}"
+                               Margin="0,14,0,0"
+                               FontSize="12"
+                               Foreground="#5F6368"
+                               TextWrapping="Wrap"/>
+                </StackPanel>
+            </Border>
+
+            <Border Background="White"
+                    BorderBrush="#E8EAED"
+                    BorderThickness="1"
+                    Padding="24"
+                    CornerRadius="8"
+                    Margin="0,16,0,0">
+                <StackPanel>
+                    <TextBlock Text="Relatório Individual de Receita/Despesa por Período"
+                               FontSize="16"
+                               FontWeight="SemiBold"
+                               Foreground="#202124"
+                               Margin="0,0,0,14"/>
+
+                    <WrapPanel>
+                        <StackPanel Margin="0,0,16,10">
+                            <TextBlock Text="Data Inicial" FontSize="13" FontWeight="SemiBold" Foreground="#202124"/>
+                            <DatePicker SelectedDate="{Binding DataInicial}" Width="170" Height="32" Margin="0,6,0,0"/>
+                        </StackPanel>
+
+                        <StackPanel Margin="0,0,16,10">
+                            <TextBlock Text="Data Final" FontSize="13" FontWeight="SemiBold" Foreground="#202124"/>
+                            <DatePicker SelectedDate="{Binding DataFinal}" Width="170" Height="32" Margin="0,6,0,0"/>
+                        </StackPanel>
+
+                        <StackPanel Margin="0,0,16,10">
+                            <TextBlock Text="Tipo" FontSize="13" FontWeight="SemiBold" Foreground="#202124"/>
+                            <ComboBox ItemsSource="{Binding TiposLancamentoFinanceiro}"
+                                      SelectedItem="{Binding TipoLancamentoFinanceiro}"
+                                      Width="160"
+                                      Height="32"
+                                      Margin="0,6,0,0"/>
+                        </StackPanel>
+                    </WrapPanel>
+
+                    <Button Content="Gerar Relatório Financeiro por Período"
+                            Command="{Binding GerarRelatorioFinanceiroCommand}"
+                            Width="290"
+                            Height="36"
+                            Margin="0,8,0,0"
+                            HorizontalAlignment="Left"
+                            Background="#6A1B9A"
+                            Foreground="White"
+                            BorderBrush="#6A1B9A"
+                            FontWeight="SemiBold"
+                            Cursor="Hand"/>
                 </StackPanel>
             </Border>
         </StackPanel>
