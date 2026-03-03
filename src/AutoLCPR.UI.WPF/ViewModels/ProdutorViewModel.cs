@@ -17,7 +17,6 @@ namespace AutoLCPR.UI.WPF.ViewModels
     {
         private int _id = 0;
         private string _nome = string.Empty;
-        private string _inscricaoEstadual = string.Empty;
         private bool _isEditMode = false;
         private readonly IServiceProvider? _serviceProvider;
 
@@ -46,19 +45,6 @@ namespace AutoLCPR.UI.WPF.ViewModels
             }
         }
 
-        public string InscricaoEstadual
-        {
-            get => _inscricaoEstadual;
-            set
-            {
-                if (_inscricaoEstadual != value)
-                {
-                    _inscricaoEstadual = value;
-                    OnPropertyChanged(nameof(InscricaoEstadual));
-                }
-            }
-        }
-
         public ICommand SalvarCommand { get; }
         public ICommand LimparCommand { get; }
 
@@ -72,16 +58,9 @@ namespace AutoLCPR.UI.WPF.ViewModels
         private async void Salvar()
         {
             var nome = Nome.Trim();
-            var inscricaoEstadual = InscricaoEstadual.Trim();
             if (string.IsNullOrWhiteSpace(nome))
             {
                 AlertService.Show("Por favor, preencha o nome do produtor.", "Validacao", AlertType.Warning);
-                return;
-            }
-
-            if (string.IsNullOrWhiteSpace(inscricaoEstadual))
-            {
-                AlertService.Show("Por favor, preencha a inscrição estadual.", "Validacao", AlertType.Warning);
                 return;
             }
 
@@ -114,15 +93,7 @@ namespace AutoLCPR.UI.WPF.ViewModels
                         return;
                     }
 
-                    var existenteInscricao = await repo.GetByInscricaoEstadualAsync(inscricaoEstadual);
-                    if (existenteInscricao != null && existenteInscricao.Id != Id && string.Equals(existenteInscricao.InscricaoEstadual, inscricaoEstadual, StringComparison.OrdinalIgnoreCase))
-                    {
-                        AlertService.Show("Ja existe outro produtor com essa inscrição estadual.", "Validacao", AlertType.Warning);
-                        return;
-                    }
-
                     produtorExistente.Nome = nome;
-                    produtorExistente.InscricaoEstadual = inscricaoEstadual;
                     await repo.UpdateAsync(produtorExistente);
                     AlertService.Show($"Produtor '{nome}' atualizado com sucesso!", "Sucesso", AlertType.Success);
                 }
@@ -136,14 +107,7 @@ namespace AutoLCPR.UI.WPF.ViewModels
                         return;
                     }
 
-                    var existenteInscricao = await repo.GetByInscricaoEstadualAsync(inscricaoEstadual);
-                    if (existenteInscricao != null && string.Equals(existenteInscricao.InscricaoEstadual, inscricaoEstadual, StringComparison.OrdinalIgnoreCase))
-                    {
-                        AlertService.Show("Ja existe um produtor com essa inscrição estadual.", "Validacao", AlertType.Warning);
-                        return;
-                    }
-
-                    await repo.AddAsync(new Produtor { Nome = nome, InscricaoEstadual = inscricaoEstadual });
+                    await repo.AddAsync(new Produtor { Nome = nome });
                     AlertService.Show($"Produtor '{nome}' cadastrado com sucesso!", "Sucesso", AlertType.Success);
                 }
                 
@@ -157,14 +121,12 @@ namespace AutoLCPR.UI.WPF.ViewModels
 
         private bool CanSalvar()
         {
-            return !string.IsNullOrWhiteSpace(Nome) &&
-                   !string.IsNullOrWhiteSpace(InscricaoEstadual);
+            return !string.IsNullOrWhiteSpace(Nome);
         }
 
         private void Limpar()
         {
             Nome = string.Empty;
-            InscricaoEstadual = string.Empty;
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
