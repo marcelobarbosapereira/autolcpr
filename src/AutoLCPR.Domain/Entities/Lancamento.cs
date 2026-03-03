@@ -12,5 +12,7 @@ public class Lancamento : BaseEntity
     public decimal Valor { get; set; }
     public DateTime Vencimento { get; set; }
     public int ProdutorId { get; set; }
+    public int? NotaFiscalId { get; set; }
     public virtual Produtor? Produtor { get; set; }
+    public virtual NotaFiscal? NotaFiscal { get; set; }
 }

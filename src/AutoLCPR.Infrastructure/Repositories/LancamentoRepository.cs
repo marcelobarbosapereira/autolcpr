@@ -35,6 +35,19 @@ public class LancamentoRepository : ILancamentoRepository
         return entity.Id;
     }
 
+    public async Task AddRangeAsync(IEnumerable<Lancamento> entities, CancellationToken cancellationToken = default)
+    {
+        await _dbContext.Lancamentos.AddRangeAsync(entities, cancellationToken);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<bool> ExistePorNotaFiscalIdAsync(int notaFiscalId, CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.Lancamentos
+            .AsNoTracking()
+            .AnyAsync(item => item.NotaFiscalId == notaFiscalId, cancellationToken);
+    }
+
     public async Task UpdateAsync(Lancamento entity)
     {
         entity.UpdatedAt = DateTime.Now;

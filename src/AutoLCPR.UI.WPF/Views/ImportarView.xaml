@@ -36,7 +36,39 @@
                                 Command="{Binding ExecutarImportacaoCommand}"
                                 Height="38"
                                 FontWeight="SemiBold"
-                                Margin="0,0,0,14"/>
+                            Margin="0,0,0,8"/>
+
+                        <Button Content="Baixar XMLs"
+                            Command="{Binding BaixarXmlCommand}"
+                            Height="38"
+                            Margin="0,0,0,14"/>
+
+                        <ProgressBar Height="16"
+                                     Margin="0,0,0,6"
+                                     Minimum="0"
+                                     Maximum="100"
+                                     Value="{Binding DownloadPercentual}"/>
+
+                        <TextBlock Margin="0,0,0,12"
+                                   Foreground="#5F6368">
+                            <TextBlock.Text>
+                                <MultiBinding StringFormat="Progresso de download: {0}/{1} ({2:F0}%)">
+                                    <Binding Path="DownloadProcessadas"/>
+                                    <Binding Path="DownloadTotal"/>
+                                    <Binding Path="DownloadPercentual"/>
+                                </MultiBinding>
+                            </TextBlock.Text>
+                        </TextBlock>
+
+                        <TextBlock Margin="0,0,0,14"
+                                   Foreground="#5F6368">
+                            <TextBlock.Text>
+                                <MultiBinding StringFormat="Sucesso: {0} | Falhas: {1}">
+                                    <Binding Path="DownloadSucesso"/>
+                                    <Binding Path="DownloadFalhas"/>
+                                </MultiBinding>
+                            </TextBlock.Text>
+                        </TextBlock>
 
                         <TextBlock Text="{Binding Status}" Foreground="#5F6368" TextWrapping="Wrap" Margin="0,0,0,14"/>
 
