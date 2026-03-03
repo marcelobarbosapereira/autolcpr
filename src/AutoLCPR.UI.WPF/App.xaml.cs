@@ -137,6 +137,8 @@ namespace AutoLCPR.UI.WPF
             var connectionString = ResolveConnectionString();
             services.AddInfrastructureServices(connectionString);
             AutoLCPR.Application.DependencyInjectionExtensions.AddApplicationServices(services);
+            services.AddSingleton<ImportacaoContextoService>();
+            services.AddTransient<ISefazAutomationService, SefazAutomationService>();
 
             _serviceProvider = services.BuildServiceProvider();
 

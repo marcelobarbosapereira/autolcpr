@@ -20,6 +20,7 @@ namespace AutoLCPR.UI.WPF.ViewModels
     public class HomeViewModel : INotifyPropertyChanged
     {
         private readonly IServiceProvider? _serviceProvider;
+        private readonly ImportacaoContextoService? _importacaoContextoService;
         private int _totalRebanhos = 0;
         private int _notasFiscaisMes = 0;
         private decimal _saldoFinanceiro = 0m;
@@ -149,6 +150,11 @@ namespace AutoLCPR.UI.WPF.ViewModels
                 if (_produtorSelecionado != value)
                 {
                     _produtorSelecionado = value;
+                    if (_importacaoContextoService != null)
+                    {
+                        _importacaoContextoService.ProdutorSelecionadoId = value?.Id;
+                        _importacaoContextoService.ProdutorSelecionadoNome = value?.Nome;
+                    }
                     OnPropertyChanged(nameof(ProdutorSelecionado));
                     _ = LoadDadosProdutorAsync();
                 }
@@ -187,6 +193,7 @@ namespace AutoLCPR.UI.WPF.ViewModels
         public HomeViewModel()
         {
             _serviceProvider = (System.Windows.Application.Current as App)?.ServiceProvider;
+            _importacaoContextoService = _serviceProvider?.GetService<ImportacaoContextoService>();
 
             // Inicializar comandos
             SelecionarReceitasCommand = new RelayCommand(() => FiltroSelecionado = "Receitas");

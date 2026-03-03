@@ -13,5 +13,6 @@ namespace AutoLCPR.Domain.Entities
         // Relacionamentos
         public virtual ICollection<Rebanho> Rebanhos { get; set; } = new List<Rebanho>();
         public virtual ICollection<NotaFiscal> NotasFiscais { get; set; } = new List<NotaFiscal>();
+        public virtual ICollection<ChaveNFe> ChavesNFe { get; set; } = new List<ChaveNFe>();
     }
 }

@@ -16,6 +16,7 @@ namespace AutoLCPR.UI.WPF.ViewModels
     public class RelatoriosViewModel : INotifyPropertyChanged
     {
         private readonly IServiceProvider? _serviceProvider;
+        private readonly ImportacaoContextoService? _importacaoContextoService;
         private int _anoFiscal;
         private DateTime _dataInicial;
         private DateTime _dataFinal;
@@ -56,6 +57,10 @@ namespace AutoLCPR.UI.WPF.ViewModels
                 if (_dataInicial != value)
                 {
                     _dataInicial = value;
+                    if (_importacaoContextoService != null)
+                    {
+                        _importacaoContextoService.DataInicio = value;
+                    }
                     OnPropertyChanged(nameof(DataInicial));
                 }
             }
@@ -69,6 +74,10 @@ namespace AutoLCPR.UI.WPF.ViewModels
                 if (_dataFinal != value)
                 {
                     _dataFinal = value;
+                    if (_importacaoContextoService != null)
+                    {
+                        _importacaoContextoService.DataFim = value;
+                    }
                     OnPropertyChanged(nameof(DataFinal));
                 }
             }
@@ -96,9 +105,17 @@ namespace AutoLCPR.UI.WPF.ViewModels
         public RelatoriosViewModel()
         {
             _serviceProvider = (System.Windows.Application.Current as App)?.ServiceProvider;
+            _importacaoContextoService = _serviceProvider?.GetService<ImportacaoContextoService>();
             _anoFiscal = DateTime.Now.Year - 1;
             _dataInicial = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
             _dataFinal = DateTime.Now.Date;
+
+            if (_importacaoContextoService != null)
+            {
+                _importacaoContextoService.DataInicio ??= _dataInicial;
+                _importacaoContextoService.DataFim ??= _dataFinal;
+            }
+
             _tipoLancamentoFinanceiro = TipoLancamento.Receita;
             TiposLancamentoFinanceiro = new List<TipoLancamento> { TipoLancamento.Receita, TipoLancamento.Despesa };
             GerarRelatorioCommand = new RelayCommand(GerarRelatorioAnualPdf);

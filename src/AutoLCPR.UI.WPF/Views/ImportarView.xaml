@@ -1,44 +1,53 @@
 <UserControl x:Class="AutoLCPR.UI.WPF.Views.ImportarView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
              Background="#F8F9FA">
     <ScrollViewer>
-        <StackPanel Margin="30" VerticalAlignment="Center" HorizontalAlignment="Center">
-            <!-- Header -->
-            <Border Background="White" BorderBrush="#E8EAED" BorderThickness="0,0,0,1" Padding="20,15" Margin="0,0,0,40" Width="600">
-                <TextBlock Text="Importar" 
-                           FontSize="24" 
-                           FontWeight="SemiBold" 
+        <StackPanel Margin="20" VerticalAlignment="Center" HorizontalAlignment="Center" Width="1200">
+            <Border Background="White" BorderBrush="#E8EAED" BorderThickness="0,0,0,1" Padding="20,15" Margin="0,0,0,16" Width="1200">
+                <TextBlock Text="Importar Chaves SEFAZ-MS"
+                           FontSize="24"
+                           FontWeight="SemiBold"
                            Foreground="#202124"
                            TextAlignment="Center"/>
             </Border>
 
-            <!-- Conteúdo -->
-            <Border Background="White" 
-                    BorderBrush="#E8EAED" 
+            <Border Background="White"
+                    BorderBrush="#E8EAED"
                     BorderThickness="1"
-                    Padding="60"
+                    Padding="16"
                     CornerRadius="8"
-                    Width="600">
-                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                    <TextBlock Text="⬇️" 
-                               FontSize="60" 
-                               TextAlignment="Center"
-                               Margin="0,0,0,20"/>
-                    
-                    <TextBlock Text="Implementação Futura" 
-                               FontSize="28" 
-                               FontWeight="SemiBold" 
-                               Foreground="#202124"
-                               TextAlignment="Center"
-                               Margin="0,0,0,15"/>
-                    
-                    <TextBlock Text="Esta funcionalidade está em desenvolvimento e será disponibilizada em breve." 
-                               FontSize="14" 
-                               Foreground="#5F6368"
-                               TextAlignment="Center"
-                               TextWrapping="Wrap"/>
-                </StackPanel>
+                    Width="1200">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="360"/>
+                        <ColumnDefinition Width="16"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0">
+                        <Button Content="Abrir SEFAZ-MS no painel"
+                                Height="36"
+                                Margin="0,0,0,8"
+                                Click="AbrirSite_Click"/>
+
+                        <Button Content="Capturar e salvar chaves"
+                                Command="{Binding ExecutarImportacaoCommand}"
+                                Height="38"
+                                FontWeight="SemiBold"
+                                Margin="0,0,0,14"/>
+
+                        <TextBlock Text="{Binding Status}" Foreground="#5F6368" TextWrapping="Wrap" Margin="0,0,0,14"/>
+
+                        <TextBlock Text="Chaves importadas" FontWeight="SemiBold" Margin="0,0,0,8" Foreground="#202124"/>
+                        <ListBox ItemsSource="{Binding ChavesImportadas}" Height="280"/>
+                    </StackPanel>
+
+                    <Border Grid.Column="2" BorderBrush="#E8EAED" BorderThickness="1" CornerRadius="6">
+                        <wv2:WebView2 x:Name="SefazWebView" Height="700" />
+                    </Border>
+                </Grid>
             </Border>
         </StackPanel>
     </ScrollViewer>
