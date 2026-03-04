@@ -9,6 +9,7 @@ namespace AutoLCPR.Domain.Entities
     {
         public required string Nome { get; set; }
         public required string InscricaoEstadual { get; set; }
+        public required string Cpf { get; set; }
 
         // Relacionamentos
         public virtual ICollection<Rebanho> Rebanhos { get; set; } = new List<Rebanho>();

@@ -29,6 +29,7 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
                     <!-- Nome do Produtor -->
@@ -49,8 +50,25 @@
                         </Border>
                     </StackPanel>
 
+                    <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,0,0,20">
+                        <TextBlock Text="CPF do Produtor" 
+                                   FontSize="14" 
+                                   FontWeight="SemiBold" 
+                                   Foreground="#202124"
+                                   Margin="0,0,0,8"/>
+                        <Border BorderBrush="#DADCE0" BorderThickness="1" CornerRadius="4">
+                            <TextBox Text="{Binding Cpf, UpdateSourceTrigger=PropertyChanged}"
+                                     Height="40"
+                                     Padding="12,10"
+                                     FontSize="14"
+                                     Background="White"
+                                     BorderThickness="0"
+                                     Foreground="#202124"/>
+                        </Border>
+                    </StackPanel>
+
                     <!-- Buttons -->
-                    <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" 
+                    <StackPanel Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" 
                                 Orientation="Horizontal" 
                                 HorizontalAlignment="Center"
                                 Margin="0,30,0,0">
@@ -98,7 +116,7 @@
                     Padding="15"
                     CornerRadius="4"
                     Margin="0,20,0,0">
-                <TextBlock Text="Preencha o nome do produtor e clique em Salvar para registrar." 
+                <TextBlock Text="Preencha o nome e o CPF do produtor e clique em Salvar para registrar." 
                            FontSize="12" 
                            Foreground="#1652AA"
                            TextWrapping="Wrap"/>

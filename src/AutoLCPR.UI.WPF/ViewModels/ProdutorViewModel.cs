@@ -7,6 +7,7 @@ using AutoLCPR.Domain.Repositories;
 using AutoLCPR.UI.WPF.Commands;
 using AutoLCPR.UI.WPF.Services;
 using Microsoft.Extensions.DependencyInjection;
+using System.Text.RegularExpressions;
 
 namespace AutoLCPR.UI.WPF.ViewModels
 {
@@ -17,8 +18,10 @@ namespace AutoLCPR.UI.WPF.ViewModels
     {
         private int _id = 0;
         private string _nome = string.Empty;
+        private string _cpf = string.Empty;
         private bool _isEditMode = false;
         private readonly IServiceProvider? _serviceProvider;
+        private static readonly Regex ApenasDigitosRegex = new("\\D", RegexOptions.Compiled);
 
         public int Id
         {
@@ -45,6 +48,19 @@ namespace AutoLCPR.UI.WPF.ViewModels
             }
         }
 
+        public string Cpf
+        {
+            get => _cpf;
+            set
+            {
+                if (_cpf != value)
+                {
+                    _cpf = value;
+                    OnPropertyChanged(nameof(Cpf));
+                }
+            }
+        }
+
         public ICommand SalvarCommand { get; }
         public ICommand LimparCommand { get; }
 
@@ -61,6 +77,13 @@ namespace AutoLCPR.UI.WPF.ViewModels
             if (string.IsNullOrWhiteSpace(nome))
             {
                 AlertService.Show("Por favor, preencha o nome do produtor.", "Validacao", AlertType.Warning);
+                return;
+            }
+
+            var cpfNormalizado = NormalizarSomenteDigitos(Cpf);
+            if (cpfNormalizado.Length != 11)
+            {
+                AlertService.Show("Por favor, informe um CPF válido com 11 dígitos.", "Validacao", AlertType.Warning);
                 return;
             }
 
@@ -94,6 +117,7 @@ namespace AutoLCPR.UI.WPF.ViewModels
                     }
 
                     produtorExistente.Nome = nome;
+                    produtorExistente.Cpf = cpfNormalizado;
                     await repo.UpdateAsync(produtorExistente);
                     AlertService.Show($"Produtor '{nome}' atualizado com sucesso!", "Sucesso", AlertType.Success);
                 }
@@ -110,7 +134,8 @@ namespace AutoLCPR.UI.WPF.ViewModels
                     await repo.AddAsync(new Produtor
                     {
                         Nome = nome,
-                        InscricaoEstadual = $"NAO-INFORMADA-{DateTime.UtcNow:yyyyMMddHHmmssfff}"
+                        InscricaoEstadual = $"NAO-INFORMADA-{DateTime.UtcNow:yyyyMMddHHmmssfff}",
+                        Cpf = cpfNormalizado
                     });
                     AlertService.Show($"Produtor '{nome}' cadastrado com sucesso!", "Sucesso", AlertType.Success);
                 }
@@ -125,12 +150,23 @@ namespace AutoLCPR.UI.WPF.ViewModels
 
         private bool CanSalvar()
         {
-            return !string.IsNullOrWhiteSpace(Nome);
+            return !string.IsNullOrWhiteSpace(Nome) && NormalizarSomenteDigitos(Cpf).Length == 11;
         }
 
         private void Limpar()
         {
             Nome = string.Empty;
+            Cpf = string.Empty;
+        }
+
+        private static string NormalizarSomenteDigitos(string? valor)
+        {
+            if (string.IsNullOrWhiteSpace(valor))
+            {
+                return string.Empty;
+            }
+
+            return ApenasDigitosRegex.Replace(valor, string.Empty);
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;

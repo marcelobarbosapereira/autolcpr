@@ -3,36 +3,31 @@ using System.ComponentModel;
 using System.Windows.Input;
 using AutoLCPR.Domain.Entities;
 using AutoLCPR.Domain.Repositories;
-using AutoLCPR.Application.DFe;
 using AutoLCPR.UI.WPF.Commands;
 using AutoLCPR.UI.WPF.Services;
 using Microsoft.Extensions.DependencyInjection;
 using System.Windows;
+using System.Text.RegularExpressions;
+using System.IO;
 
 namespace AutoLCPR.UI.WPF.ViewModels
 {
     public class ImportarViewModel : INotifyPropertyChanged
     {
         public const string SefazUrl = "http://eservicos.sefaz.ms.gov.br/";
+        private static readonly Regex ApenasDigitosRegex = new("\\D", RegexOptions.Compiled);
 
         private readonly IServiceProvider? _serviceProvider;
         private readonly ImportacaoContextoService? _contextoImportacao;
         private string _status = "Abra o site no painel para iniciar.";
         private bool _isImportando;
-        private bool _isBaixandoXml;
-        private int _downloadTotal;
-        private int _downloadProcessadas;
-        private int _downloadSucesso;
-        private int _downloadFalhas;
-        private double _downloadPercentual;
         private DateTime _dataInicio;
         private DateTime _dataFim;
 
         public ObservableCollection<string> ChavesImportadas { get; } = new();
-        public Func<Task<IReadOnlyList<string>>>? CapturarChavesNoNavegadorAsync { get; set; }
+        public Func<Task<IReadOnlyList<SefazNFeCapturada>>>? CapturarNotasNoNavegadorAsync { get; set; }
 
         public ICommand ExecutarImportacaoCommand { get; }
-        public ICommand BaixarXmlCommand { get; }
 
         public DateTime DataInicio
         {
@@ -95,85 +90,6 @@ namespace AutoLCPR.UI.WPF.ViewModels
             }
         }
 
-        public bool IsBaixandoXml
-        {
-            get => _isBaixandoXml;
-            set
-            {
-                if (_isBaixandoXml != value)
-                {
-                    _isBaixandoXml = value;
-                    OnPropertyChanged(nameof(IsBaixandoXml));
-                    CommandManager.InvalidateRequerySuggested();
-                }
-            }
-        }
-
-        public int DownloadTotal
-        {
-            get => _downloadTotal;
-            set
-            {
-                if (_downloadTotal != value)
-                {
-                    _downloadTotal = value;
-                    OnPropertyChanged(nameof(DownloadTotal));
-                }
-            }
-        }
-
-        public int DownloadProcessadas
-        {
-            get => _downloadProcessadas;
-            set
-            {
-                if (_downloadProcessadas != value)
-                {
-                    _downloadProcessadas = value;
-                    OnPropertyChanged(nameof(DownloadProcessadas));
-                }
-            }
-        }
-
-        public int DownloadSucesso
-        {
-            get => _downloadSucesso;
-            set
-            {
-                if (_downloadSucesso != value)
-                {
-                    _downloadSucesso = value;
-                    OnPropertyChanged(nameof(DownloadSucesso));
-                }
-            }
-        }
-
-        public int DownloadFalhas
-        {
-            get => _downloadFalhas;
-            set
-            {
-                if (_downloadFalhas != value)
-                {
-                    _downloadFalhas = value;
-                    OnPropertyChanged(nameof(DownloadFalhas));
-                }
-            }
-        }
-
-        public double DownloadPercentual
-        {
-            get => _downloadPercentual;
-            set
-            {
-                if (Math.Abs(_downloadPercentual - value) > 0.01)
-                {
-                    _downloadPercentual = value;
-                    OnPropertyChanged(nameof(DownloadPercentual));
-                }
-            }
-        }
-
         public ImportarViewModel()
         {
             _serviceProvider = (System.Windows.Application.Current as App)?.ServiceProvider;
@@ -182,8 +98,7 @@ namespace AutoLCPR.UI.WPF.ViewModels
             DataInicio = _contextoImportacao?.DataInicio ?? new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
             DataFim = _contextoImportacao?.DataFim ?? DateTime.Now.Date;
 
-            ExecutarImportacaoCommand = new RelayCommand(() => _ = ExecutarImportacao(), () => !IsImportando && !IsBaixandoXml);
-            BaixarXmlCommand = new RelayCommand(() => _ = BaixarXmlAsync(), () => !IsImportando && !IsBaixandoXml);
+            ExecutarImportacaoCommand = new RelayCommand(() => _ = ExecutarImportacao(), () => !IsImportando);
         }
 
         public async Task ExecutarImportacao()
@@ -200,7 +115,7 @@ namespace AutoLCPR.UI.WPF.ViewModels
                 return;
             }
 
-            if (CapturarChavesNoNavegadorAsync == null)
+            if (CapturarNotasNoNavegadorAsync == null)
             {
                 Status = "Navegador interno não inicializado.";
                 return;
@@ -213,17 +128,30 @@ namespace AutoLCPR.UI.WPF.ViewModels
             }
 
             IsImportando = true;
-            Status = "Capturando chaves da página atual...";
+            Status = "Capturando NF-es de todas as páginas da consulta...";
 
             try
             {
                 using var scope = _serviceProvider.CreateScope();
-                var chaveRepository = scope.ServiceProvider.GetRequiredService<IChaveNFeRepository>();
+                var notaRepository = scope.ServiceProvider.GetRequiredService<INotaFiscalRepository>();
+                var produtorRepository = scope.ServiceProvider.GetRequiredService<IProdutorRepository>();
 
-                var chaves = await CapturarChavesNoNavegadorAsync();
+                var notasCapturadas = await CapturarNotasNoNavegadorAsync();
+                if (notasCapturadas.Count == 0)
+                {
+                    Status = "Nenhuma NF-e encontrada na página. Verifique se a consulta foi carregada.";
+                    return;
+                }
+
+                var chaves = notasCapturadas
+                    .Select(item => item.ChaveAcesso)
+                    .Where(item => !string.IsNullOrWhiteSpace(item))
+                    .Distinct()
+                    .ToList();
+
                 if (chaves.Count == 0)
                 {
-                    Status = "Nenhuma chave encontrada na página. Verifique se a tabela foi carregada.";
+                    Status = "Nenhuma chave de acesso válida encontrada na resposta da SEFAZ.";
                     return;
                 }
 
@@ -235,17 +163,93 @@ namespace AutoLCPR.UI.WPF.ViewModels
 
                 var produtorId = _contextoImportacao.ProdutorSelecionadoId.Value;
                 var dataImportacao = DateTime.Now;
+                var produtor = await produtorRepository.GetByIdAsync(produtorId);
 
-                var entidades = chaves.Select(chave => new ChaveNFe
+                if (produtor == null)
                 {
-                    ProdutorId = produtorId,
-                    ChaveAcesso = chave,
-                    DataImportacao = dataImportacao
-                });
+                    Status = "Produtor selecionado não encontrado.";
+                    return;
+                }
 
-                await chaveRepository.AddRangeAsync(entidades);
+                var cpfProdutor = NormalizarSomenteDigitos(produtor.Cpf);
+                if (cpfProdutor.Length != 11)
+                {
+                    Status = "CPF do produtor selecionado não está válido. Atualize o cadastro do produtor antes de importar.";
+                    return;
+                }
 
-                Status = $"Importação finalizada com sucesso. {chaves.Count} chave(s) processada(s) para o produtor {produtorId}.";
+                var diretorioHtmlConsulta = CriarDiretorioConsultaHtml(cpfProdutor);
+
+                var novasNotas = 0;
+                var notasAtualizadas = 0;
+                var notasIgnoradas = 0;
+                var htmlSalvos = 0;
+
+                foreach (var item in notasCapturadas.GroupBy(item => item.ChaveAcesso).Select(item => item.First()))
+                {
+                    var tipoNota = InferirTipoNotaPorCpf(cpfProdutor, item.CpfCnpjEmitente, item.CpfCnpjDestinatario);
+                    if (tipoNota == null)
+                    {
+                        notasIgnoradas++;
+                        continue;
+                    }
+
+                    var notaExistente = await notaRepository.GetByChaveAcessoAsync(item.ChaveAcesso);
+
+                    var dataEmissao = item.DataEmissao ?? dataImportacao.Date;
+                    var numeroNota = string.IsNullOrWhiteSpace(item.NumeroNota) ? "SEM_NUMERO" : item.NumeroNota.Trim();
+                    var origem = string.IsNullOrWhiteSpace(item.RazaoSocialEmitente) ? "Não informado" : item.RazaoSocialEmitente.Trim();
+                    var destino = string.IsNullOrWhiteSpace(item.RazaoSocialDestinatario) ? "Não informado" : item.RazaoSocialDestinatario.Trim();
+                    var descricao = MontarDescricao(item);
+                    var naturezaOperacao = string.IsNullOrWhiteSpace(item.NaturezaOperacao) ? null : item.NaturezaOperacao.Trim();
+                    var cfops = item.Cfops.Count == 0 ? null : string.Join(",", item.Cfops.Distinct());
+                    var itensDescricao = item.DescricoesProdutosServicos.Count == 0 ? null : string.Join(" | ", item.DescricoesProdutosServicos.Distinct());
+
+                    if (SalvarHtmlConsultaSeDisponivel(diretorioHtmlConsulta, item))
+                    {
+                        htmlSalvos++;
+                    }
+
+                    if (notaExistente == null)
+                    {
+                        var novaNota = new NotaFiscal
+                        {
+                            ChaveAcesso = item.ChaveAcesso,
+                            DataEmissao = dataEmissao,
+                            NumeroDaNota = numeroNota,
+                            ValorNotaFiscal = item.ValorTotal,
+                            Origem = origem,
+                            Destino = destino,
+                            Descricao = descricao,
+                            NaturezaOperacao = naturezaOperacao,
+                            Cfops = cfops,
+                            ItensDescricao = itensDescricao,
+                            TipoNota = tipoNota.Value,
+                            ProdutorId = produtorId
+                        };
+
+                        await notaRepository.AddAsync(novaNota);
+                        novasNotas++;
+                        continue;
+                    }
+
+                    notaExistente.DataEmissao = dataEmissao;
+                    notaExistente.NumeroDaNota = numeroNota;
+                    notaExistente.ValorNotaFiscal = item.ValorTotal;
+                    notaExistente.Origem = origem;
+                    notaExistente.Destino = destino;
+                    notaExistente.Descricao = descricao;
+                    notaExistente.NaturezaOperacao = naturezaOperacao;
+                    notaExistente.Cfops = cfops;
+                    notaExistente.ItensDescricao = itensDescricao;
+                    notaExistente.TipoNota = tipoNota.Value;
+                    notaExistente.ProdutorId = produtorId;
+
+                    await notaRepository.UpdateAsync(notaExistente);
+                    notasAtualizadas++;
+                }
+
+                Status = $"Importação finalizada. {chaves.Count} chave(s), {novasNotas} nota(s) nova(s), {notasAtualizadas} atualizada(s), {notasIgnoradas} ignorada(s) e {htmlSalvos} HTML(s) salvo(s) em {diretorioHtmlConsulta}.";
             }
             catch (Exception ex)
             {
@@ -258,71 +262,111 @@ namespace AutoLCPR.UI.WPF.ViewModels
             }
         }
 
-        public async Task BaixarXmlAsync()
-        {
-            if (_serviceProvider == null)
-            {
-                Status = "Serviços não inicializados.";
-                return;
-            }
-
-            if (_contextoImportacao?.ProdutorSelecionadoId == null || _contextoImportacao.ProdutorSelecionadoId <= 0)
-            {
-                Status = "Nenhum produtor selecionado. Selecione um produtor na Dashboard antes de baixar XML.";
-                return;
-            }
-
-            IsBaixandoXml = true;
-            DownloadTotal = 0;
-            DownloadProcessadas = 0;
-            DownloadSucesso = 0;
-            DownloadFalhas = 0;
-            DownloadPercentual = 0;
-
-            try
-            {
-                using var scope = _serviceProvider.CreateScope();
-                var downloadService = scope.ServiceProvider.GetRequiredService<IDFePlaywrightDownloadService>();
-
-                var progress = new Progress<DownloadXmlProgress>(item =>
-                {
-                    DownloadTotal = item.TotalNotas;
-                    DownloadProcessadas = item.Processadas;
-                    DownloadSucesso = item.Sucesso;
-                    DownloadFalhas = item.Falhas;
-                    DownloadPercentual = item.TotalNotas <= 0
-                        ? 0
-                        : (double)item.Processadas / item.TotalNotas * 100d;
-                    Status = item.Mensagem;
-                });
-
-                await downloadService.BaixarXmlPendentesAsync(_contextoImportacao.ProdutorSelecionadoId.Value, progress);
-
-                if (DownloadTotal == 0)
-                {
-                    Status = "Nenhuma nota pendente para baixar XML.";
-                }
-                else
-                {
-                    Status = $"Download finalizado. {DownloadSucesso}/{DownloadTotal} com sucesso e {DownloadFalhas} falha(s).";
-                }
-            }
-            catch (Exception ex)
-            {
-                Status = $"Erro durante download de XML: {ex.Message}";
-                MessageBox.Show(Status, "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            finally
-            {
-                IsBaixandoXml = false;
-            }
-        }
-
         public event PropertyChangedEventHandler? PropertyChanged;
 
         protected void OnPropertyChanged(string propertyName)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        private static string NormalizarSomenteDigitos(string? valor)
+        {
+            if (string.IsNullOrWhiteSpace(valor))
+            {
+                return string.Empty;
+            }
+
+            return ApenasDigitosRegex.Replace(valor, string.Empty);
+        }
+
+        private static TipoNota? InferirTipoNotaPorCpf(string cpfProdutor, string? cpfCnpjEmitente, string? cpfCnpjDestinatario)
+        {
+            var emitenteNormalizado = NormalizarSomenteDigitos(cpfCnpjEmitente);
+            var destinatarioNormalizado = NormalizarSomenteDigitos(cpfCnpjDestinatario);
+
+            if (cpfProdutor == emitenteNormalizado)
+            {
+                return TipoNota.Saida;
+            }
+
+            if (cpfProdutor == destinatarioNormalizado)
+            {
+                return TipoNota.Entrada;
+            }
+
+            return null;
+        }
+
+        private static string MontarDescricao(SefazNFeCapturada item)
+        {
+            var partes = new List<string>();
+
+            if (!string.IsNullOrWhiteSpace(item.Situacao))
+            {
+                partes.Add($"Situação: {item.Situacao.Trim()}");
+            }
+
+            if (!string.IsNullOrWhiteSpace(item.NaturezaOperacao))
+            {
+                partes.Add($"Natureza: {item.NaturezaOperacao.Trim()}");
+            }
+
+            if (item.Cfops.Count > 0)
+            {
+                var cfops = string.Join(", ", item.Cfops.Distinct());
+                partes.Add($"CFOP(s): {cfops}");
+            }
+
+            if (item.DescricoesProdutosServicos.Count > 0)
+            {
+                var itens = string.Join(" | ", item.DescricoesProdutosServicos.Distinct());
+                partes.Add($"Itens: {itens}");
+            }
+
+            if (partes.Count == 0)
+            {
+                partes.Add("Importado automaticamente da SEFAZ-MS");
+            }
+
+            var descricao = string.Join(". ", partes);
+            if (descricao.Length > 500)
+            {
+                return descricao.Substring(0, 500);
+            }
+
+            return descricao;
+        }
+
+        private static string CriarDiretorioConsultaHtml(string cpfProdutor)
+        {
+            var basePath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                "AutoLCPR",
+                "consultas-nfe",
+                cpfProdutor);
+
+            Directory.CreateDirectory(basePath);
+            return basePath;
+        }
+
+        private static bool SalvarHtmlConsultaSeDisponivel(string diretorio, SefazNFeCapturada item)
+        {
+            if (string.IsNullOrWhiteSpace(item.HtmlConsulta) || string.IsNullOrWhiteSpace(item.ChaveAcesso))
+            {
+                return false;
+            }
+
+            try
+            {
+                var nomeArquivo = $"{item.ChaveAcesso}.html";
+                var filePath = Path.Combine(diretorio, nomeArquivo);
+                File.WriteAllText(filePath, item.HtmlConsulta);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }

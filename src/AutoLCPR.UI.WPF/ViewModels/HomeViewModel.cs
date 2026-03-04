@@ -241,6 +241,7 @@ namespace AutoLCPR.UI.WPF.ViewModels
                 viewModel.IsEditMode = true;
                 viewModel.Id = ProdutorSelecionado.Id;
                 viewModel.Nome = ProdutorSelecionado.Nome;
+                viewModel.Cpf = ProdutorSelecionado.Cpf;
             }
             AbrirJanelaModal(view, "Editar Produtor");
             _ = LoadProdutoresAsync();
