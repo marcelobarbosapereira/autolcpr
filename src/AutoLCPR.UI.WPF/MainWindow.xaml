@@ -63,6 +63,9 @@ Title="AutoLCPR"
         <DataTemplate DataType="{x:Type vm:ImportarViewModel}">
             <local:ImportarView/>
         </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:ConfiguracoesViewModel}">
+            <local:ConfiguracoesView/>
+        </DataTemplate>
     </Window.Resources>
     <Grid>
         <Grid.ColumnDefinitions>

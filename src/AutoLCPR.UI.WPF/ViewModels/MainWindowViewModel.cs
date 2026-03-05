@@ -30,6 +30,7 @@ namespace AutoLCPR.UI.WPF.ViewModels
         public ICommand NavigateToRebanhoCommand { get; }
         public ICommand NavigateToRelatoriosCommand { get; }
         public ICommand NavigateToImportarCommand { get; }
+        public ICommand NavigateToConfiguracoesCommand { get; }
 
         public MainWindowViewModel()
         {
@@ -39,6 +40,7 @@ namespace AutoLCPR.UI.WPF.ViewModels
             NavigateToRebanhoCommand = new RelayCommand(() => NavigateTo(new RebanhoViewModel()));
             NavigateToRelatoriosCommand = new RelayCommand(() => NavigateTo(new RelatoriosViewModel()));
             NavigateToImportarCommand = new RelayCommand(() => NavigateTo(new ImportarViewModel()));
+            NavigateToConfiguracoesCommand = new RelayCommand(() => NavigateTo(new ConfiguracoesViewModel()));
 
             // Começar com a View Home
             CurrentView = new HomeViewModel();

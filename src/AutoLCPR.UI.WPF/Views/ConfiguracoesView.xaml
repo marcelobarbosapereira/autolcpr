@@ -1,0 +1,300 @@
+<UserControl x:Class="AutoLCPR.UI.WPF.Views.ConfiguracoesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="#F8F9FA">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="30" MaxWidth="1200" HorizontalAlignment="Stretch">
+            <!-- Header -->
+            <Border Background="White" BorderBrush="#E8EAED" BorderThickness="0,0,0,1" Padding="20,15" Margin="0,0,0,20">
+                <TextBlock Text="Configurações de Importação de NFes" 
+                           FontSize="24" 
+                           FontWeight="SemiBold" 
+                           Foreground="#202124"/>
+            </Border>
+
+            <!-- Pasta de HTML e Imagem -->
+            <Border Background="White" 
+                    BorderBrush="#E8EAED" 
+                    BorderThickness="1"
+                    Padding="24"
+                    CornerRadius="8"
+                    Margin="0,0,0,16">
+                <StackPanel>
+                    <TextBlock Text="Configurações Básicas" 
+                               FontSize="16" 
+                               FontWeight="SemiBold" 
+                               Foreground="#202124"
+                               Margin="0,0,0,20"/>
+
+                    <!-- Pasta HTML -->
+                    <TextBlock Text="Pasta com Arquivos HTML das NFes" 
+                               FontSize="13" 
+                               FontWeight="SemiBold" 
+                               Foreground="#202124"
+                               Margin="0,0,0,8"/>
+                    
+                    <TextBlock Text="Digite ou cole o caminho da pasta contendo os arquivos HTML. Você pode usar variáveis como %AppData%." 
+                               FontSize="12" 
+                               Foreground="#5F6368"
+                               TextWrapping="Wrap"
+                               Margin="0,0,0,10"/>
+
+                    <TextBox Text="{Binding PastaHtml, UpdateSourceTrigger=PropertyChanged}" 
+                             Height="34"
+                             Padding="10,6"
+                             Margin="0,0,0,20"/>
+
+                    <Separator Margin="0,10,0,20"/>
+
+                    <!-- Imagem do Cabeçalho -->
+                    <TextBlock Text="Imagem para Cabeçalho dos Relatórios" 
+                               FontSize="13" 
+                               FontWeight="SemiBold" 
+                               Foreground="#202124"
+                               Margin="0,0,0,8"/>
+
+                    <Grid Margin="0,0,0,20">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        
+                        <TextBox Grid.Column="0"
+                                 Text="{Binding ImagemCabecalho, UpdateSourceTrigger=PropertyChanged}" 
+                                 Height="34"
+                                 Padding="10,6"
+                                 IsReadOnly="True"
+                                 VerticalContentAlignment="Center"
+                                 Margin="0,0,10,0"/>
+                        
+                        <Button Grid.Column="1"
+                                Content="Selecionar..."
+                                Command="{Binding SelecionarImagemCommand}"
+                                Width="120"
+                                Height="34"
+                                Margin="0,0,10,0"
+                                Background="#1A73E8"
+                                Foreground="White"
+                                BorderBrush="#1A73E8"
+                                FontWeight="SemiBold"
+                                Cursor="Hand"/>
+                        
+                        <Button Grid.Column="2"
+                                Content="Limpar"
+                                Command="{Binding LimparImagemCommand}"
+                                Width="80"
+                                Height="34"
+                                Background="#F44336"
+                                Foreground="White"
+                                BorderBrush="#F44336"
+                                FontWeight="SemiBold"
+                                Cursor="Hand"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- CFOPs a Ignorar -->
+            <Border Background="White" 
+                    BorderBrush="#E8EAED" 
+                    BorderThickness="1"
+                    Padding="24"
+                    CornerRadius="8"
+                    Margin="0,0,0,16">
+                <StackPanel>
+                    <TextBlock Text="CFOPs a Serem Ignorados" 
+                               FontSize="14" 
+                               FontWeight="SemiBold" 
+                               Foreground="#202124"
+                               Margin="0,0,0,8"/>
+                    
+                    <TextBlock Text="Notas com estes CFOPs NÃO serão importadas. Separe por vírgula." 
+                               FontSize="12" 
+                               Foreground="#5F6368"
+                               TextWrapping="Wrap"
+                               Margin="0,0,0,10"/>
+
+                    <TextBox Text="{Binding CfopsIgnorados, UpdateSourceTrigger=PropertyChanged}" 
+                             Height="50"
+                             Padding="10,8"
+                             TextWrapping="Wrap"
+                             AcceptsReturn="True"
+                             VerticalScrollBarVisibility="Auto"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Naturezas a Ignorar -->
+            <Border Background="White" 
+                    BorderBrush="#E8EAED" 
+                    BorderThickness="1"
+                    Padding="24"
+                    CornerRadius="8"
+                    Margin="0,0,0,16">
+                <StackPanel>
+                    <TextBlock Text="Naturezas de Operação a Serem Ignoradas" 
+                               FontSize="14" 
+                               FontWeight="SemiBold" 
+                               Foreground="#202124"
+                               Margin="0,0,0,8"/>
+                    
+                    <TextBlock Text="Notas com estas naturezas NÃO serão importadas. Separe por vírgula." 
+                               FontSize="12" 
+                               Foreground="#5F6368"
+                               TextWrapping="Wrap"
+                               Margin="0,0,0,10"/>
+
+                    <TextBox Text="{Binding NaturezasIgnoradas, UpdateSourceTrigger=PropertyChanged}" 
+                             Height="50"
+                             Padding="10,8"
+                             TextWrapping="Wrap"
+                             AcceptsReturn="True"
+                             VerticalScrollBarVisibility="Auto"/>
+                </StackPanel>
+            </Border>
+
+            <!-- CFOPs de Receita -->
+            <Border Background="White" 
+                    BorderBrush="#E8EAED" 
+                    BorderThickness="1"
+                    Padding="24"
+                    CornerRadius="8"
+                    Margin="0,0,0,16">
+                <StackPanel>
+                    <TextBlock Text="CFOPs que Indicam RECEITA" 
+                               FontSize="14" 
+                               FontWeight="SemiBold" 
+                               Foreground="#0F9D58"
+                               Margin="0,0,0,8"/>
+                    
+                    <TextBlock Text="Notas com estes CFOPs serão classificadas como RECEITA. Separe por vírgula." 
+                               FontSize="12" 
+                               Foreground="#5F6368"
+                               TextWrapping="Wrap"
+                               Margin="0,0,0,10"/>
+
+                    <TextBox Text="{Binding CfopReceita, UpdateSourceTrigger=PropertyChanged}" 
+                             Height="50"
+                             Padding="10,8"
+                             TextWrapping="Wrap"
+                             AcceptsReturn="True"
+                             VerticalScrollBarVisibility="Auto"/>
+                </StackPanel>
+            </Border>
+
+            <!-- CFOPs de Despesa -->
+            <Border Background="White" 
+                    BorderBrush="#E8EAED" 
+                    BorderThickness="1"
+                    Padding="24"
+                    CornerRadius="8"
+                    Margin="0,0,0,16">
+                <StackPanel>
+                    <TextBlock Text="CFOPs que Indicam DESPESA" 
+                               FontSize="14" 
+                               FontWeight="SemiBold" 
+                               Foreground="#EA4335"
+                               Margin="0,0,0,8"/>
+                    
+                    <TextBlock Text="Notas com estes CFOPs serão classificadas como DESPESA. Separe por vírgula." 
+                               FontSize="12" 
+                               Foreground="#5F6368"
+                               TextWrapping="Wrap"
+                               Margin="0,0,0,10"/>
+
+                    <TextBox Text="{Binding CfopDespesa, UpdateSourceTrigger=PropertyChanged}" 
+                             Height="50"
+                             Padding="10,8"
+                             TextWrapping="Wrap"
+                             AcceptsReturn="True"
+                             VerticalScrollBarVisibility="Auto"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Naturezas de Receita -->
+            <Border Background="White" 
+                    BorderBrush="#E8EAED" 
+                    BorderThickness="1"
+                    Padding="24"
+                    CornerRadius="8"
+                    Margin="0,0,0,16">
+                <StackPanel>
+                    <TextBlock Text="Naturezas que Indicam RECEITA" 
+                               FontSize="14" 
+                               FontWeight="SemiBold" 
+                               Foreground="#0F9D58"
+                               Margin="0,0,0,8"/>
+                    
+                    <TextBlock Text="Notas com estas naturezas serão classificadas como RECEITA. Separe por vírgula." 
+                               FontSize="12" 
+                               Foreground="#5F6368"
+                               TextWrapping="Wrap"
+                               Margin="0,0,0,10"/>
+
+                    <TextBox Text="{Binding NaturezaReceita, UpdateSourceTrigger=PropertyChanged}" 
+                             Height="50"
+                             Padding="10,8"
+                             TextWrapping="Wrap"
+                             AcceptsReturn="True"
+                             VerticalScrollBarVisibility="Auto"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Naturezas de Despesa -->
+            <Border Background="White" 
+                    BorderBrush="#E8EAED" 
+                    BorderThickness="1"
+                    Padding="24"
+                    CornerRadius="8"
+                    Margin="0,0,0,16">
+                <StackPanel>
+                    <TextBlock Text="Naturezas que Indicam DESPESA" 
+                               FontSize="14" 
+                               FontWeight="SemiBold" 
+                               Foreground="#EA4335"
+                               Margin="0,0,0,8"/>
+                    
+                    <TextBlock Text="Notas com estas naturezas serão classificadas como DESPESA. Separe por vírgula." 
+                               FontSize="12" 
+                               Foreground="#5F6368"
+                               TextWrapping="Wrap"
+                               Margin="0,0,0,10"/>
+
+                    <TextBox Text="{Binding NaturezaDespesa, UpdateSourceTrigger=PropertyChanged}" 
+                             Height="50"
+                             Padding="10,8"
+                             TextWrapping="Wrap"
+                             AcceptsReturn="True"
+                             VerticalScrollBarVisibility="Auto"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Botões de Ação -->
+            <Border Background="White" 
+                    BorderBrush="#E8EAED" 
+                    BorderThickness="1"
+                    Padding="24"
+                    CornerRadius="8"
+                    Margin="0,0,0,30">
+                <StackPanel>
+                    <Button Content="💾 Salvar Configurações"
+                            Command="{Binding SalvarCommand}"
+                            Width="200"
+                            Height="40"
+                            Margin="0,0,0,12"
+                            HorizontalAlignment="Left"
+                            Background="#0F9D58"
+                            Foreground="White"
+                            BorderBrush="#0F9D58"
+                            FontWeight="SemiBold"
+                            FontSize="14"
+                            Cursor="Hand"/>
+
+                    <TextBlock Text="{Binding Status}"
+                               FontSize="12"
+                               Foreground="#5F6368"
+                               TextWrapping="Wrap"/>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

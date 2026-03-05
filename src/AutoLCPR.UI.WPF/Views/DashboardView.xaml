@@ -172,216 +172,243 @@
                     <StackPanel>
                         <!-- Despesas Grid -->
                         <Grid Visibility="{Binding FiltroSelecionado, Converter={StaticResource FiltroToVisibilityConverter}, ConverterParameter=Despesas}">
-                            <StackPanel>
-                                <Border BorderBrush="#E8EAED" BorderThickness="0,0,0,1" Padding="20">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="100"/>
-                                            <ColumnDefinition Width="120"/>
-                                            <ColumnDefinition Width="150"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="120"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Text="Data Emissão" FontSize="12" FontWeight="SemiBold" Foreground="#5F6368"/>
-                                        <TextBlock Grid.Column="1" Text="Número NF" FontSize="12" FontWeight="SemiBold" Foreground="#5F6368"/>
-                                        <TextBlock Grid.Column="2" Text="Origem" FontSize="12" FontWeight="SemiBold" Foreground="#5F6368"/>
-                                        <TextBlock Grid.Column="3" Text="Descrição" FontSize="12" FontWeight="SemiBold" Foreground="#5F6368"/>
-                                        <TextBlock Grid.Column="4" Text="Valor" FontSize="12" FontWeight="SemiBold" Foreground="#5F6368"/>
-                                    </Grid>
-                                </Border>
-                                <ItemsControl ItemsSource="{Binding Despesas}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Border BorderBrush="#E8EAED" BorderThickness="0,0,0,1" Padding="20"
-                                                    Cursor="Hand"
-                                                    MouseLeftButtonDown="Border_MouseLeftButtonDown">
-                                                <Border.InputBindings>
-                                                    <MouseBinding Gesture="LeftDoubleClick" 
-                                                                  Command="{Binding DataContext.EditarNotaFiscalCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" 
-                                                                  CommandParameter="{Binding}"/>
-                                                </Border.InputBindings>
-                                                <Border.Style>
-                                                    <Style TargetType="Border">
-                                                        <Setter Property="Background" Value="Transparent"/>
-                                                        <Style.Triggers>
-                                                            <DataTrigger Value="True">
-                                                                <DataTrigger.Binding>
-                                                                    <MultiBinding Converter="{StaticResource NotaFiscalSelectionConverter}">
-                                                                        <Binding />
-                                                                        <Binding Path="DataContext.NotaFiscalSelecionada" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
-                                                                    </MultiBinding>
-                                                                </DataTrigger.Binding>
-                                                                <Setter Property="Background" Value="#CCE8FF"/>
-                                                            </DataTrigger>
-                                                            <Trigger Property="IsMouseOver" Value="True">
-                                                                <Setter Property="Background" Value="#E5F3FF"/>
-                                                            </Trigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </Border.Style>
-                                                <Grid>
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="100"/>
-                                                        <ColumnDefinition Width="120"/>
-                                                        <ColumnDefinition Width="150"/>
-                                                        <ColumnDefinition Width="*"/>
-                                                        <ColumnDefinition Width="120"/>
-                                                    </Grid.ColumnDefinitions>
-                                                    <TextBlock Text="{Binding DataEmissao, StringFormat=dd/MM/yyyy}" FontSize="12" Foreground="#202124"/>
-                                                    <TextBlock Grid.Column="1" Text="{Binding NumeroDaNota}" FontSize="12" Foreground="#202124"/>
-                                                    <TextBlock Grid.Column="2" Text="{Binding Origem}" FontSize="12" Foreground="#202124"/>
-                                                    <TextBlock Grid.Column="3" Text="{Binding Descricao}" FontSize="12" Foreground="#202124"/>
-                                                    <TextBlock Grid.Column="4" Text="{Binding ValorNotaFiscal, StringFormat=R$ {0:N2}}" FontSize="12" Foreground="#202124" FontWeight="SemiBold"/>
-                                                </Grid>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </StackPanel>
+                            <DataGrid ItemsSource="{Binding Despesas}"
+                                      SelectedItem="{Binding NotaFiscalSelecionada}"
+                                      AutoGenerateColumns="False"
+                                      CanUserResizeColumns="True"
+                                      CanUserResizeRows="False"
+                                      CanUserReorderColumns="False"
+                                      CanUserSortColumns="True"
+                                      IsReadOnly="True"
+                                      SelectionMode="Single"
+                                      GridLinesVisibility="Horizontal"
+                                      HeadersVisibility="Column"
+                                      BorderThickness="0"
+                                      Background="White"
+                                      RowBackground="Transparent"
+                                      AlternatingRowBackground="#F8F9FA"
+                                      HorizontalScrollBarVisibility="Auto"
+                                      VerticalScrollBarVisibility="Disabled">
+                                <DataGrid.ColumnHeaderStyle>
+                                    <Style TargetType="DataGridColumnHeader">
+                                        <Setter Property="Background" Value="White"/>
+                                        <Setter Property="Foreground" Value="#5F6368"/>
+                                        <Setter Property="FontSize" Value="12"/>
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                        <Setter Property="Padding" Value="20,12"/>
+                                        <Setter Property="BorderBrush" Value="#E8EAED"/>
+                                        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                                        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+                                    </Style>
+                                </DataGrid.ColumnHeaderStyle>
+                                <DataGrid.RowStyle>
+                                    <Style TargetType="DataGridRow">
+                                        <Setter Property="Background" Value="Transparent"/>
+                                        <Setter Property="Cursor" Value="Hand"/>
+                                        <Style.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="Background" Value="#E5F3FF"/>
+                                            </Trigger>
+                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter Property="Background" Value="#CCE8FF"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </DataGrid.RowStyle>
+                                <DataGrid.CellStyle>
+                                    <Style TargetType="DataGridCell">
+                                        <Setter Property="BorderThickness" Value="0"/>
+                                        <Setter Property="Padding" Value="20,12"/>
+                                        <Setter Property="FontSize" Value="12"/>
+                                        <Setter Property="Foreground" Value="#202124"/>
+                                        <Setter Property="Background" Value="Transparent"/>
+                                        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                                        <Style.Triggers>
+                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter Property="Background" Value="Transparent"/>
+                                                <Setter Property="Foreground" Value="#202124"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </DataGrid.CellStyle>
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Data Emissão" Binding="{Binding DataEmissao, StringFormat=dd/MM/yyyy}" Width="120" MinWidth="100"/>
+                                    <DataGridTextColumn Header="Número NF" Binding="{Binding NumeroDaNota}" Width="140" MinWidth="100"/>
+                                    <DataGridTextColumn Header="Origem" Binding="{Binding Origem}" Width="180" MinWidth="120"/>
+                                    <DataGridTextColumn Header="Descrição" Binding="{Binding Descricao}" Width="*" MinWidth="200"/>
+                                    <DataGridTextColumn Header="Valor" Binding="{Binding ValorNotaFiscal, StringFormat=R$ {0:N2}}" Width="140" MinWidth="100">
+                                        <DataGridTextColumn.ElementStyle>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                            </Style>
+                                        </DataGridTextColumn.ElementStyle>
+                                    </DataGridTextColumn>
+                                </DataGrid.Columns>
+                                <DataGrid.InputBindings>
+                                    <MouseBinding Gesture="LeftDoubleClick" 
+                                                  Command="{Binding EditarNotaFiscalCommand}" 
+                                                  CommandParameter="{Binding NotaFiscalSelecionada}"/>
+                                </DataGrid.InputBindings>
+                            </DataGrid>
                         </Grid>
 
                         <!-- Receitas Grid -->
                         <Grid Visibility="{Binding FiltroSelecionado, Converter={StaticResource FiltroToVisibilityConverter}, ConverterParameter=Receitas}">
-                            <StackPanel>
-                                <Border BorderBrush="#E8EAED" BorderThickness="0,0,0,1" Padding="20">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="100"/>
-                                            <ColumnDefinition Width="120"/>
-                                            <ColumnDefinition Width="150"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="120"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Text="Data Emissão" FontSize="12" FontWeight="SemiBold" Foreground="#5F6368"/>
-                                        <TextBlock Grid.Column="1" Text="Número NF" FontSize="12" FontWeight="SemiBold" Foreground="#5F6368"/>
-                                        <TextBlock Grid.Column="2" Text="Destino" FontSize="12" FontWeight="SemiBold" Foreground="#5F6368"/>
-                                        <TextBlock Grid.Column="3" Text="Descrição" FontSize="12" FontWeight="SemiBold" Foreground="#5F6368"/>
-                                        <TextBlock Grid.Column="4" Text="Valor" FontSize="12" FontWeight="SemiBold" Foreground="#5F6368"/>
-                                    </Grid>
-                                </Border>
-                                <ItemsControl ItemsSource="{Binding Receitas}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Border BorderBrush="#E8EAED" BorderThickness="0,0,0,1" Padding="20"
-                                                    Cursor="Hand"
-                                                    MouseLeftButtonDown="Border_MouseLeftButtonDown">
-                                                <Border.InputBindings>
-                                                    <MouseBinding Gesture="LeftDoubleClick" 
-                                                                  Command="{Binding DataContext.EditarNotaFiscalCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" 
-                                                                  CommandParameter="{Binding}"/>
-                                                </Border.InputBindings>
-                                                <Border.Style>
-                                                    <Style TargetType="Border">
-                                                        <Setter Property="Background" Value="Transparent"/>
-                                                        <Style.Triggers>
-                                                            <DataTrigger Value="True">
-                                                                <DataTrigger.Binding>
-                                                                    <MultiBinding Converter="{StaticResource NotaFiscalSelectionConverter}">
-                                                                        <Binding />
-                                                                        <Binding Path="DataContext.NotaFiscalSelecionada" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
-                                                                    </MultiBinding>
-                                                                </DataTrigger.Binding>
-                                                                <Setter Property="Background" Value="#CCE8FF"/>
-                                                            </DataTrigger>
-                                                            <Trigger Property="IsMouseOver" Value="True">
-                                                                <Setter Property="Background" Value="#E5F3FF"/>
-                                                            </Trigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </Border.Style>
-                                                <Grid>
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="100"/>
-                                                        <ColumnDefinition Width="120"/>
-                                                        <ColumnDefinition Width="150"/>
-                                                        <ColumnDefinition Width="*"/>
-                                                        <ColumnDefinition Width="120"/>
-                                                    </Grid.ColumnDefinitions>
-                                                    <TextBlock Text="{Binding DataEmissao, StringFormat=dd/MM/yyyy}" FontSize="12" Foreground="#202124"/>
-                                                    <TextBlock Grid.Column="1" Text="{Binding NumeroDaNota}" FontSize="12" Foreground="#202124"/>
-                                                    <TextBlock Grid.Column="2" Text="{Binding Destino}" FontSize="12" Foreground="#202124"/>
-                                                    <TextBlock Grid.Column="3" Text="{Binding Descricao}" FontSize="12" Foreground="#202124"/>
-                                                    <TextBlock Grid.Column="4" Text="{Binding ValorNotaFiscal, StringFormat=R$ {0:N2}}" FontSize="12" Foreground="#202124" FontWeight="SemiBold"/>
-                                                </Grid>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </StackPanel>
+                            <DataGrid ItemsSource="{Binding Receitas}"
+                                      SelectedItem="{Binding NotaFiscalSelecionada}"
+                                      AutoGenerateColumns="False"
+                                      CanUserResizeColumns="True"
+                                      CanUserResizeRows="False"
+                                      CanUserReorderColumns="False"
+                                      CanUserSortColumns="True"
+                                      IsReadOnly="True"
+                                      SelectionMode="Single"
+                                      GridLinesVisibility="Horizontal"
+                                      HeadersVisibility="Column"
+                                      BorderThickness="0"
+                                      Background="White"
+                                      RowBackground="Transparent"
+                                      AlternatingRowBackground="#F8F9FA"
+                                      HorizontalScrollBarVisibility="Auto"
+                                      VerticalScrollBarVisibility="Disabled">
+                                <DataGrid.ColumnHeaderStyle>
+                                    <Style TargetType="DataGridColumnHeader">
+                                        <Setter Property="Background" Value="White"/>
+                                        <Setter Property="Foreground" Value="#5F6368"/>
+                                        <Setter Property="FontSize" Value="12"/>
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                        <Setter Property="Padding" Value="20,12"/>
+                                        <Setter Property="BorderBrush" Value="#E8EAED"/>
+                                        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                                        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+                                    </Style>
+                                </DataGrid.ColumnHeaderStyle>
+                                <DataGrid.RowStyle>
+                                    <Style TargetType="DataGridRow">
+                                        <Setter Property="Background" Value="Transparent"/>
+                                        <Setter Property="Cursor" Value="Hand"/>
+                                        <Style.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="Background" Value="#E5F3FF"/>
+                                            </Trigger>
+                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter Property="Background" Value="#CCE8FF"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </DataGrid.RowStyle>
+                                <DataGrid.CellStyle>
+                                    <Style TargetType="DataGridCell">
+                                        <Setter Property="BorderThickness" Value="0"/>
+                                        <Setter Property="Padding" Value="20,12"/>
+                                        <Setter Property="FontSize" Value="12"/>
+                                        <Setter Property="Foreground" Value="#202124"/>
+                                        <Setter Property="Background" Value="Transparent"/>
+                                        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                                        <Style.Triggers>
+                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter Property="Background" Value="Transparent"/>
+                                                <Setter Property="Foreground" Value="#202124"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </DataGrid.CellStyle>
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Data Emissão" Binding="{Binding DataEmissao, StringFormat=dd/MM/yyyy}" Width="120" MinWidth="100"/>
+                                    <DataGridTextColumn Header="Número NF" Binding="{Binding NumeroDaNota}" Width="140" MinWidth="100"/>
+                                    <DataGridTextColumn Header="Destino" Binding="{Binding Destino}" Width="180" MinWidth="120"/>
+                                    <DataGridTextColumn Header="Descrição" Binding="{Binding Descricao}" Width="*" MinWidth="200"/>
+                                    <DataGridTextColumn Header="Valor" Binding="{Binding ValorNotaFiscal, StringFormat=R$ {0:N2}}" Width="140" MinWidth="100">
+                                        <DataGridTextColumn.ElementStyle>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                            </Style>
+                                        </DataGridTextColumn.ElementStyle>
+                                    </DataGridTextColumn>
+                                </DataGrid.Columns>
+                                <DataGrid.InputBindings>
+                                    <MouseBinding Gesture="LeftDoubleClick" 
+                                                  Command="{Binding EditarNotaFiscalCommand}" 
+                                                  CommandParameter="{Binding NotaFiscalSelecionada}"/>
+                                </DataGrid.InputBindings>
+                            </DataGrid>
                         </Grid>
 
                         <!-- Rebanho Grid -->
                         <Grid Visibility="{Binding FiltroSelecionado, Converter={StaticResource FiltroToVisibilityConverter}, ConverterParameter=Rebanho}">
-                            <StackPanel>
-                                <Border BorderBrush="#E8EAED" BorderThickness="0,0,0,1" Padding="20">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="80"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="110"/>
-                                            <ColumnDefinition Width="100"/>
-                                            <ColumnDefinition Width="100"/>
-                                            <ColumnDefinition Width="100"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Text="Inscrição" FontSize="12" FontWeight="SemiBold" Foreground="#5F6368"/>
-                                        <TextBlock Grid.Column="1" Text="Nome" FontSize="12" FontWeight="SemiBold" Foreground="#5F6368"/>
-                                        <TextBlock Grid.Column="2" Text="Nascimentos" FontSize="12" FontWeight="SemiBold" Foreground="#5F6368"/>
-                                        <TextBlock Grid.Column="3" Text="Entradas" FontSize="12" FontWeight="SemiBold" Foreground="#5F6368"/>
-                                        <TextBlock Grid.Column="4" Text="Saídas" FontSize="12" FontWeight="SemiBold" Foreground="#5F6368"/>
-                                        <TextBlock Grid.Column="5" Text="Mortes" FontSize="12" FontWeight="SemiBold" Foreground="#5F6368"/>
-                                    </Grid>
-                                </Border>
-                                <ItemsControl ItemsSource="{Binding Rebanhos}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Border BorderBrush="#E8EAED" BorderThickness="0,0,0,1" Padding="20" 
-                                                    Cursor="Hand"
-                                                    MouseLeftButtonDown="Border_MouseLeftButtonDown">
-                                                <Border.InputBindings>
-                                                    <MouseBinding Gesture="LeftDoubleClick" 
-                                                                  Command="{Binding DataContext.EditarRebanhoCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" 
-                                                                  CommandParameter="{Binding}"/>
-                                                </Border.InputBindings>
-                                                <Border.Style>
-                                                    <Style TargetType="Border">
-                                                        <Setter Property="Background" Value="Transparent"/>
-                                                        <Style.Triggers>
-                                                            <DataTrigger Value="True">
-                                                                <DataTrigger.Binding>
-                                                                    <MultiBinding Converter="{StaticResource RebanhoSelectionConverter}">
-                                                                        <Binding />
-                                                                        <Binding Path="DataContext.RebanhoSelecionado" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
-                                                                    </MultiBinding>
-                                                                </DataTrigger.Binding>
-                                                                <Setter Property="Background" Value="#CCE8FF"/>
-                                                            </DataTrigger>
-                                                            <Trigger Property="IsMouseOver" Value="True">
-                                                                <Setter Property="Background" Value="#E5F3FF"/>
-                                                            </Trigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </Border.Style>
-                                                <Grid>
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="80"/>
-                                                        <ColumnDefinition Width="*"/>
-                                                        <ColumnDefinition Width="110"/>
-                                                        <ColumnDefinition Width="100"/>
-                                                        <ColumnDefinition Width="100"/>
-                                                        <ColumnDefinition Width="100"/>
-                                                    </Grid.ColumnDefinitions>
-                                                    <TextBlock Text="{Binding IdRebanho}" FontSize="12" Foreground="#202124"/>
-                                                    <TextBlock Grid.Column="1" Text="{Binding NomeRebanho}" FontSize="12" Foreground="#202124"/>
-                                                    <TextBlock Grid.Column="2" Text="{Binding Nascimentos}" FontSize="12" Foreground="#202124"/>
-                                                    <TextBlock Grid.Column="3" Text="{Binding Entradas}" FontSize="12" Foreground="#202124"/>
-                                                    <TextBlock Grid.Column="4" Text="{Binding Saidas}" FontSize="12" Foreground="#202124"/>
-                                                    <TextBlock Grid.Column="5" Text="{Binding Mortes}" FontSize="12" Foreground="#202124"/>
-                                                </Grid>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </StackPanel>
+                            <DataGrid ItemsSource="{Binding Rebanhos}"
+                                      SelectedItem="{Binding RebanhoSelecionado}"
+                                      AutoGenerateColumns="False"
+                                      CanUserResizeColumns="True"
+                                      CanUserResizeRows="False"
+                                      CanUserReorderColumns="False"
+                                      CanUserSortColumns="True"
+                                      IsReadOnly="True"
+                                      SelectionMode="Single"
+                                      GridLinesVisibility="Horizontal"
+                                      HeadersVisibility="Column"
+                                      BorderThickness="0"
+                                      Background="White"
+                                      RowBackground="Transparent"
+                                      AlternatingRowBackground="#F8F9FA"
+                                      HorizontalScrollBarVisibility="Auto"
+                                      VerticalScrollBarVisibility="Disabled">
+                                <DataGrid.ColumnHeaderStyle>
+                                    <Style TargetType="DataGridColumnHeader">
+                                        <Setter Property="Background" Value="White"/>
+                                        <Setter Property="Foreground" Value="#5F6368"/>
+                                        <Setter Property="FontSize" Value="12"/>
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                        <Setter Property="Padding" Value="20,12"/>
+                                        <Setter Property="BorderBrush" Value="#E8EAED"/>
+                                        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                                        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+                                    </Style>
+                                </DataGrid.ColumnHeaderStyle>
+                                <DataGrid.RowStyle>
+                                    <Style TargetType="DataGridRow">
+                                        <Setter Property="Background" Value="Transparent"/>
+                                        <Setter Property="Cursor" Value="Hand"/>
+                                        <Style.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="Background" Value="#E5F3FF"/>
+                                            </Trigger>
+                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter Property="Background" Value="#CCE8FF"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </DataGrid.RowStyle>
+                                <DataGrid.CellStyle>
+                                    <Style TargetType="DataGridCell">
+                                        <Setter Property="BorderThickness" Value="0"/>
+                                        <Setter Property="Padding" Value="20,12"/>
+                                        <Setter Property="FontSize" Value="12"/>
+                                        <Setter Property="Foreground" Value="#202124"/>
+                                        <Setter Property="Background" Value="Transparent"/>
+                                        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                                        <Style.Triggers>
+                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter Property="Background" Value="Transparent"/>
+                                                <Setter Property="Foreground" Value="#202124"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </DataGrid.CellStyle>
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Inscrição" Binding="{Binding IdRebanho}" Width="100" MinWidth="80"/>
+                                    <DataGridTextColumn Header="Nome" Binding="{Binding NomeRebanho}" Width="*" MinWidth="150"/>
+                                    <DataGridTextColumn Header="Nascimentos" Binding="{Binding Nascimentos}" Width="130" MinWidth="100"/>
+                                    <DataGridTextColumn Header="Entradas" Binding="{Binding Entradas}" Width="110" MinWidth="90"/>
+                                    <DataGridTextColumn Header="Saídas" Binding="{Binding Saidas}" Width="110" MinWidth="90"/>
+                                    <DataGridTextColumn Header="Mortes" Binding="{Binding Mortes}" Width="110" MinWidth="90"/>
+                                </DataGrid.Columns>
+                                <DataGrid.InputBindings>
+                                    <MouseBinding Gesture="LeftDoubleClick" 
+                                                  Command="{Binding EditarRebanhoCommand}" 
+                                                  CommandParameter="{Binding RebanhoSelecionado}"/>
+                                </DataGrid.InputBindings>
+                            </DataGrid>
                         </Grid>
                     </StackPanel>
                 </ScrollViewer>

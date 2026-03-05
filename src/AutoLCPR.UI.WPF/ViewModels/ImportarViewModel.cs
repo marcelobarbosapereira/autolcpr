@@ -9,6 +9,9 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Windows;
 using System.Text.RegularExpressions;
 using System.IO;
+using AutoLCPR.Application.Services;
+using AutoLCPR.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace AutoLCPR.UI.WPF.ViewModels
 {
@@ -28,6 +31,7 @@ namespace AutoLCPR.UI.WPF.ViewModels
         public Func<Task<IReadOnlyList<SefazNFeCapturada>>>? CapturarNotasNoNavegadorAsync { get; set; }
 
         public ICommand ExecutarImportacaoCommand { get; }
+        public ICommand ImportarNotasCommand { get; }
 
         public DateTime DataInicio
         {
@@ -99,6 +103,7 @@ namespace AutoLCPR.UI.WPF.ViewModels
             DataFim = _contextoImportacao?.DataFim ?? DateTime.Now.Date;
 
             ExecutarImportacaoCommand = new RelayCommand(() => _ = ExecutarImportacao(), () => !IsImportando);
+            ImportarNotasCommand = new RelayCommand(() => _ = ImportarNotas(), () => !IsImportando);
         }
 
         public async Task ExecutarImportacao()
@@ -111,7 +116,7 @@ namespace AutoLCPR.UI.WPF.ViewModels
 
             if (_contextoImportacao?.ProdutorSelecionadoId == null || _contextoImportacao.ProdutorSelecionadoId <= 0)
             {
-                Status = "Nenhum produtor selecionado. Selecione um produtor na Dashboard antes de importar.";
+                Status = "Nenhum produtor selecionado. Selecione um produtor na Dashboard antes de capturar.";
                 return;
             }
 
@@ -133,8 +138,8 @@ namespace AutoLCPR.UI.WPF.ViewModels
             try
             {
                 using var scope = _serviceProvider.CreateScope();
-                var notaRepository = scope.ServiceProvider.GetRequiredService<INotaFiscalRepository>();
                 var produtorRepository = scope.ServiceProvider.GetRequiredService<IProdutorRepository>();
+                var nfeImportService = scope.ServiceProvider.GetRequiredService<NfeImportService>();
 
                 var notasCapturadas = await CapturarNotasNoNavegadorAsync();
                 if (notasCapturadas.Count == 0)
@@ -162,7 +167,6 @@ namespace AutoLCPR.UI.WPF.ViewModels
                 }
 
                 var produtorId = _contextoImportacao.ProdutorSelecionadoId.Value;
-                var dataImportacao = DateTime.Now;
                 var produtor = await produtorRepository.GetByIdAsync(produtorId);
 
                 if (produtor == null)
@@ -174,86 +178,26 @@ namespace AutoLCPR.UI.WPF.ViewModels
                 var cpfProdutor = NormalizarSomenteDigitos(produtor.Cpf);
                 if (cpfProdutor.Length != 11)
                 {
-                    Status = "CPF do produtor selecionado não está válido. Atualize o cadastro do produtor antes de importar.";
+                    Status = "CPF do produtor selecionado não está válido. Atualize o cadastro do produtor antes de capturar.";
                     return;
                 }
 
-                var diretorioHtmlConsulta = CriarDiretorioConsultaHtml(cpfProdutor);
-
-                var novasNotas = 0;
-                var notasAtualizadas = 0;
-                var notasIgnoradas = 0;
+                var diretorioHtmlConsulta = await nfeImportService.CriarPastaProdutorAsync(cpfProdutor);
                 var htmlSalvos = 0;
 
                 foreach (var item in notasCapturadas.GroupBy(item => item.ChaveAcesso).Select(item => item.First()))
                 {
-                    var tipoNota = InferirTipoNotaPorCpf(cpfProdutor, item.CpfCnpjEmitente, item.CpfCnpjDestinatario);
-                    if (tipoNota == null)
-                    {
-                        notasIgnoradas++;
-                        continue;
-                    }
-
-                    var notaExistente = await notaRepository.GetByChaveAcessoAsync(item.ChaveAcesso);
-
-                    var dataEmissao = item.DataEmissao ?? dataImportacao.Date;
-                    var numeroNota = string.IsNullOrWhiteSpace(item.NumeroNota) ? "SEM_NUMERO" : item.NumeroNota.Trim();
-                    var origem = string.IsNullOrWhiteSpace(item.RazaoSocialEmitente) ? "Não informado" : item.RazaoSocialEmitente.Trim();
-                    var destino = string.IsNullOrWhiteSpace(item.RazaoSocialDestinatario) ? "Não informado" : item.RazaoSocialDestinatario.Trim();
-                    var descricao = MontarDescricao(item);
-                    var naturezaOperacao = string.IsNullOrWhiteSpace(item.NaturezaOperacao) ? null : item.NaturezaOperacao.Trim();
-                    var cfops = item.Cfops.Count == 0 ? null : string.Join(",", item.Cfops.Distinct());
-                    var itensDescricao = item.DescricoesProdutosServicos.Count == 0 ? null : string.Join(" | ", item.DescricoesProdutosServicos.Distinct());
-
                     if (SalvarHtmlConsultaSeDisponivel(diretorioHtmlConsulta, item))
                     {
                         htmlSalvos++;
                     }
-
-                    if (notaExistente == null)
-                    {
-                        var novaNota = new NotaFiscal
-                        {
-                            ChaveAcesso = item.ChaveAcesso,
-                            DataEmissao = dataEmissao,
-                            NumeroDaNota = numeroNota,
-                            ValorNotaFiscal = item.ValorTotal,
-                            Origem = origem,
-                            Destino = destino,
-                            Descricao = descricao,
-                            NaturezaOperacao = naturezaOperacao,
-                            Cfops = cfops,
-                            ItensDescricao = itensDescricao,
-                            TipoNota = tipoNota.Value,
-                            ProdutorId = produtorId
-                        };
-
-                        await notaRepository.AddAsync(novaNota);
-                        novasNotas++;
-                        continue;
-                    }
-
-                    notaExistente.DataEmissao = dataEmissao;
-                    notaExistente.NumeroDaNota = numeroNota;
-                    notaExistente.ValorNotaFiscal = item.ValorTotal;
-                    notaExistente.Origem = origem;
-                    notaExistente.Destino = destino;
-                    notaExistente.Descricao = descricao;
-                    notaExistente.NaturezaOperacao = naturezaOperacao;
-                    notaExistente.Cfops = cfops;
-                    notaExistente.ItensDescricao = itensDescricao;
-                    notaExistente.TipoNota = tipoNota.Value;
-                    notaExistente.ProdutorId = produtorId;
-
-                    await notaRepository.UpdateAsync(notaExistente);
-                    notasAtualizadas++;
                 }
 
-                Status = $"Importação finalizada. {chaves.Count} chave(s), {novasNotas} nota(s) nova(s), {notasAtualizadas} atualizada(s), {notasIgnoradas} ignorada(s) e {htmlSalvos} HTML(s) salvo(s) em {diretorioHtmlConsulta}.";
+                Status = $"Captura finalizada. {chaves.Count} NF-e(s) capturada(s) e {htmlSalvos} arquivo(s) HTML salvo(s) em {diretorioHtmlConsulta}.";
             }
             catch (Exception ex)
             {
-                Status = $"Erro durante importação: {ex.Message}";
+                Status = $"Erro durante captura: {ex.Message}";
                 MessageBox.Show(Status, "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
@@ -337,18 +281,6 @@ namespace AutoLCPR.UI.WPF.ViewModels
             return descricao;
         }
 
-        private static string CriarDiretorioConsultaHtml(string cpfProdutor)
-        {
-            var basePath = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "AutoLCPR",
-                "consultas-nfe",
-                cpfProdutor);
-
-            Directory.CreateDirectory(basePath);
-            return basePath;
-        }
-
         private static bool SalvarHtmlConsultaSeDisponivel(string diretorio, SefazNFeCapturada item)
         {
             if (string.IsNullOrWhiteSpace(item.HtmlConsulta) || string.IsNullOrWhiteSpace(item.ChaveAcesso))
@@ -367,6 +299,217 @@ namespace AutoLCPR.UI.WPF.ViewModels
             {
                 return false;
             }
+        }
+
+        public async Task ImportarNotas()
+        {
+            if (_serviceProvider == null)
+            {
+                Status = "Serviços não inicializados.";
+                return;
+            }
+
+            if (_contextoImportacao?.ProdutorSelecionadoId == null || _contextoImportacao.ProdutorSelecionadoId <= 0)
+            {
+                Status = "Nenhum produtor selecionado. Selecione um produtor na Dashboard antes de importar.";
+                return;
+            }
+
+            IsImportando = true;
+            Status = "Importando notas fiscais dos arquivos HTML...";
+
+            try
+            {
+                using var scope = _serviceProvider.CreateScope();
+                var produtorRepository = scope.ServiceProvider.GetRequiredService<IProdutorRepository>();
+                var notaFiscalRepository = scope.ServiceProvider.GetRequiredService<INotaFiscalRepository>();
+                var lancamentoRepository = scope.ServiceProvider.GetRequiredService<ILancamentoRepository>();
+                var nfeImportService = scope.ServiceProvider.GetRequiredService<NfeImportService>();
+                var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+                var produtorId = _contextoImportacao.ProdutorSelecionadoId.Value;
+                var produtor = await produtorRepository.GetByIdAsync(produtorId);
+
+                if (produtor == null)
+                {
+                    Status = "Produtor selecionado não encontrado.";
+                    return;
+                }
+
+                var cpfProdutor = NormalizarSomenteDigitos(produtor.Cpf);
+                if (cpfProdutor.Length != 11)
+                {
+                    Status = "CPF do produtor selecionado não está válido. Atualize o cadastro do produtor antes de importar.";
+                    return;
+                }
+
+                // Limpar importações anteriores do produtor para reprocessar com dados corretos
+                await dbContext.Database.ExecuteSqlInterpolatedAsync($"DELETE FROM Lancamentos WHERE ProdutorId = {produtorId}");
+                await dbContext.Database.ExecuteSqlInterpolatedAsync($"DELETE FROM NotasFiscais WHERE ProdutorId = {produtorId}");
+
+                // Importar notas usando o NfeImportService
+                var notasDto = await nfeImportService.ImportarNotasAsync(cpfProdutor, produtorId);
+
+                if (notasDto.Count == 0)
+                {
+                    Status = "Nenhuma nota fiscal encontrada para importar. Execute a captura primeiro.";
+                    return;
+                }
+
+                int notasImportadas = 0;
+                int notasJaExistiam = 0;
+                int lancamentosCriados = 0;
+                var arquivosHtml = Directory.GetFiles(await nfeImportService.ObterCaminoPastaProdutorAsync(cpfProdutor), "*.html").Length;
+                var notasIgnoradasPorRegra = arquivosHtml - notasDto.Count;
+
+                foreach (var notaDto in notasDto)
+                {
+                    // Verificar se a nota já existe no banco
+                    var notaExistente = await notaFiscalRepository.GetByChaveAcessoAsync(notaDto.Chave);
+                    if (notaExistente != null)
+                    {
+                        notasJaExistiam++;
+                        continue;
+                    }
+
+                    // Identificar se o produtor é emitente ou destinatário
+                    var produtorEhEmitente = cpfProdutor == notaDto.EmitenteCpfCnpj;
+                    var produtorEhDestinatario = cpfProdutor == notaDto.DestinatarioCpfCnpj;
+
+                    // Determinar origem e destino baseado em quem é o produtor E o tipo classificado
+                    // REGRA ESPECIAL: Se há conflito entre tipo classificado e posição do produtor,
+                    // ajustar para mostrar a contraparte correta
+                    string origem, destino, clienteFornecedor;
+                    
+                    // Verificar se há conflito entre tipo e posição
+                    var temConflito = (notaDto.Tipo == TipoLancamento.Receita && produtorEhDestinatario) ||
+                                      (notaDto.Tipo == TipoLancamento.Despesa && produtorEhEmitente);
+                    
+                    if (temConflito && produtorEhDestinatario && notaDto.Tipo == TipoLancamento.Receita)
+                    {
+                        // CONFLITO: Classificado como RECEITA mas produtor é DESTINATÁRIO
+                        // Neste caso, o EMITENTE é a contraparte (fornecedor que vendeu)
+                        origem = LimitarTexto(notaDto.EmitenteNome, 200, "Fornecedor");
+                        destino = LimitarTexto(notaDto.EmitenteNome, 200, "Fornecedor");
+                        clienteFornecedor = LimitarTexto(notaDto.EmitenteNome, 200, "Fornecedor");
+                    }
+                    else if (temConflito && produtorEhEmitente && notaDto.Tipo == TipoLancamento.Despesa)
+                    {
+                        // CONFLITO: Classificado como DESPESA mas produtor é EMITENTE
+                        // Neste caso, o DESTINATÁRIO é a contraparte (cliente que comprou)
+                        origem = LimitarTexto(produtor.Nome, 200, notaDto.EmitenteNome);
+                        destino = LimitarTexto(notaDto.DestinatarioNome, 200, "Cliente");
+                        clienteFornecedor = LimitarTexto(notaDto.DestinatarioNome, 200, "Cliente");
+                    }
+                    else if (produtorEhEmitente)
+                    {
+                        // SEM CONFLITO: Produtor é o emitente (nota de SAÍDA/RECEITA normal)
+                        // Cliente está comprando do produtor
+                        origem = LimitarTexto(produtor.Nome, 200, notaDto.EmitenteNome);
+                        destino = LimitarTexto(notaDto.DestinatarioNome, 200, "Cliente");
+                        clienteFornecedor = LimitarTexto(notaDto.DestinatarioNome, 200, "Cliente");
+                    }
+                    else if (produtorEhDestinatario)
+                    {
+                        // SEM CONFLITO: Produtor é o destinatário (nota de ENTRADA/DESPESA normal)
+                        // Produtor está comprando do fornecedor
+                        origem = LimitarTexto(notaDto.EmitenteNome, 200, "Fornecedor");
+                        destino = LimitarTexto(notaDto.EmitenteNome, 200, "Fornecedor");
+                        clienteFornecedor = LimitarTexto(notaDto.EmitenteNome, 200, "Fornecedor");
+                    }
+                    else
+                    {
+                        // Caso especial: produtor não é nem emitente nem destinatário
+                        // Manter dados originais
+                        origem = LimitarTexto(notaDto.EmitenteNome, 200, "N/D");
+                        destino = LimitarTexto(notaDto.DestinatarioNome, 200, "N/D");
+                        clienteFornecedor = LimitarTexto(
+                            notaDto.Tipo == TipoLancamento.Receita ? notaDto.DestinatarioNome : notaDto.EmitenteNome, 
+                            200, 
+                            "NFe"
+                        );
+                    }
+
+                    // Criar entidade NotaFiscal
+                    var notaFiscal = new NotaFiscal
+                    {
+                        ChaveAcesso = notaDto.Chave,
+                        ProdutorId = produtorId,
+                        TipoNota = notaDto.Tipo == TipoLancamento.Receita ? TipoNota.Saida : TipoNota.Entrada,
+                        NumeroDaNota = LimitarTexto(notaDto.NumeroNota, 20, notaDto.Chave.Substring(Math.Max(0, notaDto.Chave.Length - 9))),
+                        DataEmissao = notaDto.DataEmissao ?? DateTime.Now,
+                        ValorNotaFiscal = notaDto.ValorTotal,
+                        Origem = origem,
+                        Destino = destino,
+                        Descricao = LimitarTexto(notaDto.Descricao, 500, "Importado automaticamente da SEFAZ-MS"),
+                        NaturezaOperacao = LimitarTexto(notaDto.Natureza, 1000),
+                        Cfops = LimitarTexto(notaDto.CFOP, 500),
+                        ItensDescricao = LimitarTexto(notaDto.Descricao, 2000)
+                    };
+
+                    await notaFiscalRepository.AddAsync(notaFiscal);
+                    notasImportadas++;
+
+                    // Criar Lançamento correspondente
+                    var lancamento = new Lancamento
+                    {
+                        Tipo = notaDto.Tipo,
+                        ProdutorId = produtorId,
+                        ClienteFornecedor = clienteFornecedor,
+                        Descricao = LimitarTexto($"{notaDto.Descricao} - NF {notaFiscal.NumeroDaNota}", 500, "Lançamento importado de NF-e"),
+                        Situacao = "Confirmado",
+                        Valor = notaDto.ValorTotal,
+                        Data = notaFiscal.DataEmissao,
+                        Vencimento = notaFiscal.DataEmissao
+                    };
+
+                    await lancamentoRepository.AddAsync(lancamento);
+                    lancamentosCriados++;
+                }
+
+                // Montar mensagem detalhada
+                var mensagem = new System.Text.StringBuilder();
+                mensagem.AppendLine($"✓ Arquivos HTML encontrados: {arquivosHtml}");
+                mensagem.AppendLine($"✓ Notas processadas com sucesso: {notasImportadas}");
+                mensagem.AppendLine($"✓ Lançamentos criados: {lancamentosCriados}");
+                
+                if (notasJaExistiam > 0)
+                {
+                    mensagem.AppendLine($"\n⚠ Notas já existentes (ignoradas): {notasJaExistiam}");
+                }
+                
+                if (notasIgnoradasPorRegra > 0)
+                {
+                    mensagem.AppendLine($"\n⊗ Notas ignoradas por regras de configuração: {notasIgnoradasPorRegra}");
+                    mensagem.AppendLine("  (CFOPs ou Naturezas nas listas de exclusão)");
+                }
+                
+                Status = $"Importação concluída! {notasImportadas} nota(s) importada(s).";
+                MessageBox.Show(mensagem.ToString(), "Importação Concluída", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                var detalhe = ex.InnerException?.Message;
+                Status = string.IsNullOrWhiteSpace(detalhe)
+                    ? $"Erro durante importação: {ex.Message}"
+                    : $"Erro durante importação: {detalhe}";
+                MessageBox.Show(Status, "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                IsImportando = false;
+            }
+        }
+
+        private static string LimitarTexto(string? valor, int tamanhoMaximo, string fallback = "")
+        {
+            var texto = string.IsNullOrWhiteSpace(valor) ? fallback : valor.Trim();
+            if (texto.Length <= tamanhoMaximo)
+            {
+                return texto;
+            }
+
+            return texto.Substring(0, tamanhoMaximo);
         }
     }
 }

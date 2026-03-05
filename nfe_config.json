@@ -1,0 +1,30 @@
+{
+  "pastaHtml": "%AppData%/AutoLCPR/html",
+  "imagemCabecalho": null,
+  "ignorarCFOP": [
+    "5910",
+    "6910"
+  ],
+  "ignorarNatureza": [
+    "DEVOLUÇÃO",
+    "BONIFICAÇÃO"
+  ],
+  "cfopReceita": [
+    "5102",
+    "5104",
+    "5410"
+  ],
+  "cfopDespesa": [
+    "1102",
+    "1104",
+    "7102"
+  ],
+  "naturezaReceita": [
+    "VENDA",
+    "RECEITA"
+  ],
+  "naturezaDespesa": [
+    "COMPRA",
+    "DESPESA"
+  ]
+}

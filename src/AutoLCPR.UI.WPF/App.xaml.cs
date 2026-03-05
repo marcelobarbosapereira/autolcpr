@@ -68,7 +68,7 @@ namespace AutoLCPR.UI.WPF
         {
             try
             {
-                SimpleLogger.LogError(message, ex);
+                Services.SimpleLogger.LogError(message, ex);
             }
             catch
             {
@@ -112,16 +112,16 @@ namespace AutoLCPR.UI.WPF
             try
             {
                 Directory.CreateDirectory(databasePath);
-                SimpleLogger.Log($"Diretório de dados criado/verificado: {databasePath}");
+                    Services.SimpleLogger.Log($"Diretório de dados criado/verificado: {databasePath}");
             }
             catch (Exception ex)
             {
-                SimpleLogger.LogError($"Erro ao criar diretório de dados", ex);
+                Services.SimpleLogger.LogError($"Erro ao criar diretório de dados", ex);
             }
             
             connString = connString.Replace("{DatabasePath}", databasePath);
             
-            SimpleLogger.Log($"Connection String resolvido: {connString}");
+            Services.SimpleLogger.Log($"Connection String resolvido: {connString}");
             
             return connString;
         }

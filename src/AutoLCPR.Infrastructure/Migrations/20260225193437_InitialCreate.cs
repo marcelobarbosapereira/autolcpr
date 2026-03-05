@@ -18,6 +18,8 @@ namespace AutoLCPR.Infrastructure.Migrations
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     Nome = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    InscricaoEstadual = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
+                    Cpf = table.Column<string>(type: "TEXT", maxLength: 14, nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true)
                 },
@@ -39,6 +41,9 @@ namespace AutoLCPR.Infrastructure.Migrations
                     Origem = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
                     Destino = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
                     Descricao = table.Column<string>(type: "TEXT", maxLength: 500, nullable: false),
+                    NaturezaOperacao = table.Column<string>(type: "TEXT", nullable: true),
+                    Cfops = table.Column<string>(type: "TEXT", nullable: true),
+                    ItensDescricao = table.Column<string>(type: "TEXT", nullable: true),
                     TipoNota = table.Column<int>(type: "INTEGER", nullable: false),
                     ProdutorId = table.Column<int>(type: "INTEGER", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),

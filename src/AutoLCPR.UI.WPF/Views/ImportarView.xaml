@@ -32,8 +32,14 @@
                                 Margin="0,0,0,8"
                                 Click="AbrirSite_Click"/>
 
-                        <Button Content="Capturar e importar"
+                        <Button Content="Capturar NF-es"
                                 Command="{Binding ExecutarImportacaoCommand}"
+                                Height="38"
+                                FontWeight="SemiBold"
+                                Margin="0,0,0,14"/>
+
+                        <Button Content="Importar"
+                                Command="{Binding ImportarNotasCommand}"
                                 Height="38"
                                 FontWeight="SemiBold"
                                 Margin="0,0,0,14"/>

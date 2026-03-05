@@ -1,5 +1,6 @@
 using AutoLCPR.UI.WPF.ViewModels;
 using AutoLCPR.UI.WPF.Services;
+using AutoLCPR.Application.Services;
 using AutoLCPR.Domain.Repositories;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Extensions.DependencyInjection;
@@ -135,7 +136,7 @@ namespace AutoLCPR.UI.WPF.Views
 
                     if (DataContext is ImportarViewModel viewModel)
                     {
-                        viewModel.Status = $"{_notasCapturadasPorChave.Count} NF-e capturada(s) da consulta. Clique em 'Capturar e importar'.";
+                        viewModel.Status = $"{_notasCapturadasPorChave.Count} NF-e capturada(s) da consulta. Clique em 'Capturar NF-es'.";
                     }
 
                     lock (_capturaEventoLock)
@@ -331,7 +332,13 @@ namespace AutoLCPR.UI.WPF.Views
 
             using var scope = serviceProvider.CreateScope();
             var produtorRepository = scope.ServiceProvider.GetService<IProdutorRepository>();
+            var nfeImportService = scope.ServiceProvider.GetService<NfeImportService>();
             if (produtorRepository == null)
+            {
+                return null;
+            }
+
+            if (nfeImportService == null)
             {
                 return null;
             }
@@ -348,11 +355,7 @@ namespace AutoLCPR.UI.WPF.Views
                 return null;
             }
 
-            return Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "AutoLCPR",
-                "consultas-nfe",
-                cpf);
+            return await nfeImportService.ObterCaminoPastaProdutorAsync(cpf);
         }
 
         private async Task<SefazNFeDetalheCapturado?> ExtrairDetalhesNotaAsync(string chaveAcesso, string? identificadorDetalhe, string? diretorioCache)
