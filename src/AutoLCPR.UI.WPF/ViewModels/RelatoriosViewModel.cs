@@ -1,12 +1,13 @@
+using System;
 using System.ComponentModel;
 using System.IO;
+using System.Threading.Tasks;
 using System.Windows.Input;
-using AutoLCPR.Application.Relatorios;
-using AutoLCPR.Domain.Entities;
+using AutoLCPR.Application.Services;
 using AutoLCPR.UI.WPF.Commands;
 using AutoLCPR.UI.WPF.Services;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Win32;
+using Microsoft.Playwright;
 
 namespace AutoLCPR.UI.WPF.ViewModels
 {
@@ -15,23 +16,35 @@ namespace AutoLCPR.UI.WPF.ViewModels
     /// </summary>
     public class RelatoriosViewModel : INotifyPropertyChanged
     {
-        private readonly IServiceProvider? _serviceProvider;
-        private readonly ImportacaoContextoService? _importacaoContextoService;
-        private int _anoFiscal;
-        private DateTime _dataInicial;
-        private DateTime _dataFinal;
-        private TipoLancamento _tipoLancamentoFinanceiro;
-        private string _status = "Selecione o ano-base e clique em Gerar Relatório.";
+        private string _titulo = "Relatórios";
+        private int _anoBase = DateTime.Now.Year;
+        private string _status = "Pronto para gerar relatório";
+        private bool _carregando = false;
+        private IServiceProvider? _serviceProvider;
+        private ImportacaoContextoService? _importacaoContextoService;
 
-        public int AnoFiscal
+        public string Titulo
         {
-            get => _anoFiscal;
+            get => _titulo;
             set
             {
-                if (_anoFiscal != value)
+                if (_titulo != value)
                 {
-                    _anoFiscal = value;
-                    OnPropertyChanged(nameof(AnoFiscal));
+                    _titulo = value;
+                    OnPropertyChanged(nameof(Titulo));
+                }
+            }
+        }
+
+        public int AnoBase
+        {
+            get => _anoBase;
+            set
+            {
+                if (_anoBase != value)
+                {
+                    _anoBase = value;
+                    OnPropertyChanged(nameof(AnoBase));
                 }
             }
         }
@@ -49,175 +62,171 @@ namespace AutoLCPR.UI.WPF.ViewModels
             }
         }
 
-        public DateTime DataInicial
+        public bool Carregando
         {
-            get => _dataInicial;
+            get => _carregando;
             set
             {
-                if (_dataInicial != value)
+                if (_carregando != value)
                 {
-                    _dataInicial = value;
-                    if (_importacaoContextoService != null)
-                    {
-                        _importacaoContextoService.DataInicio = value;
-                    }
-                    OnPropertyChanged(nameof(DataInicial));
+                    _carregando = value;
+                    OnPropertyChanged(nameof(Carregando));
                 }
             }
         }
 
-        public DateTime DataFinal
-        {
-            get => _dataFinal;
-            set
-            {
-                if (_dataFinal != value)
-                {
-                    _dataFinal = value;
-                    if (_importacaoContextoService != null)
-                    {
-                        _importacaoContextoService.DataFim = value;
-                    }
-                    OnPropertyChanged(nameof(DataFinal));
-                }
-            }
-        }
-
-        public TipoLancamento TipoLancamentoFinanceiro
-        {
-            get => _tipoLancamentoFinanceiro;
-            set
-            {
-                if (_tipoLancamentoFinanceiro != value)
-                {
-                    _tipoLancamentoFinanceiro = value;
-                    OnPropertyChanged(nameof(TipoLancamentoFinanceiro));
-                }
-            }
-        }
-
-        public IReadOnlyList<TipoLancamento> TiposLancamentoFinanceiro { get; }
-
-        public ICommand GerarRelatorioCommand { get; }
-        public ICommand GerarRelatorioRebanhoCommand { get; }
-        public ICommand GerarRelatorioFinanceiroCommand { get; }
+        public ICommand GerarLivroCaixaCommand { get; }
 
         public RelatoriosViewModel()
         {
-            _serviceProvider = (System.Windows.Application.Current as App)?.ServiceProvider;
-            _importacaoContextoService = _serviceProvider?.GetService<ImportacaoContextoService>();
-            _anoFiscal = DateTime.Now.Year - 1;
-            _dataInicial = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
-            _dataFinal = DateTime.Now.Date;
-
-            if (_importacaoContextoService != null)
-            {
-                _importacaoContextoService.DataInicio ??= _dataInicial;
-                _importacaoContextoService.DataFim ??= _dataFinal;
-            }
-
-            _tipoLancamentoFinanceiro = TipoLancamento.Receita;
-            TiposLancamentoFinanceiro = new List<TipoLancamento> { TipoLancamento.Receita, TipoLancamento.Despesa };
-            GerarRelatorioCommand = new RelayCommand(GerarRelatorioAnualPdf);
-            GerarRelatorioRebanhoCommand = new RelayCommand(GerarRelatorioRebanhoPdf);
-            GerarRelatorioFinanceiroCommand = new RelayCommand(GerarRelatorioFinanceiroPdf);
-        }
-
-        private void GerarRelatorioAnualPdf()
-        {
-            GerarPdf(
-                "Gerando relatório anual em PDF...",
-                "Salvar Relatório Consolidado Anual",
-                $"LivroCaixa_{AnoFiscal}_{AnoFiscal + 1}.pdf",
-                serviceProvider => serviceProvider.GetRequiredService<IRelatorioAnualService>().GerarRelatorioAnual(AnoFiscal),
-                "Erro ao gerar o relatório anual.");
-        }
-
-        private void GerarRelatorioRebanhoPdf()
-        {
-            GerarPdf(
-                "Gerando relatório de movimentação de rebanho em PDF...",
-                "Salvar Relatório de Movimentação de Rebanho",
-                $"Rebanho_{AnoFiscal}_{AnoFiscal + 1}.pdf",
-                serviceProvider => serviceProvider.GetRequiredService<IRelatorioRebanhoService>().GerarRelatorioRebanho(AnoFiscal),
-                "Erro ao gerar o relatório de rebanho.");
-        }
-
-        private void GerarRelatorioFinanceiroPdf()
-        {
-            if (DataInicial.Date > DataFinal.Date)
-            {
-                AlertService.Show("A data inicial não pode ser maior que a data final.", "Validação", AlertType.Warning);
-                return;
-            }
-
-            GerarPdf(
-                "Gerando relatório financeiro por período em PDF...",
-                "Salvar Relatório Financeiro por Período",
-                $"{TipoLancamentoFinanceiro}_{DataInicial:yyyyMMdd}_{DataFinal:yyyyMMdd}.pdf",
-                serviceProvider => serviceProvider
-                    .GetRequiredService<IRelatorioFinanceiroService>()
-                    .GerarRelatorioFinanceiro(DataInicial.Date, DataFinal.Date, TipoLancamentoFinanceiro),
-                "Erro ao gerar o relatório financeiro por período.");
-        }
-
-        private void GerarPdf(string statusProcessando, string tituloSalvar, string nomeArquivo, Func<IServiceProvider, byte[]> gerarPdf, string statusErro)
-        {
-            if (_serviceProvider == null)
-            {
-                AlertService.Show("Serviços não inicializados.", "Erro", AlertType.Error);
-                return;
-            }
-
-            if (AnoFiscal < 1900 || AnoFiscal > 3000)
-            {
-                AlertService.Show("Informe um ano-base válido.", "Validação", AlertType.Warning);
-                return;
-            }
-
             try
             {
-                Status = statusProcessando;
-
-                using var scope = _serviceProvider.CreateScope();
-                var pdfBytes = gerarPdf(scope.ServiceProvider);
-
-                if (pdfBytes.Length == 0)
+                var app = System.Windows.Application.Current as App;
+                if (app != null)
                 {
-                    AlertService.Show("Não foi possível gerar o PDF.", "Erro", AlertType.Error);
-                    Status = "Falha na geração do relatório.";
-                    return;
-                }
-
-                var fileDialog = new SaveFileDialog
-                {
-                    Title = tituloSalvar,
-                    Filter = "Arquivo PDF (*.pdf)|*.pdf",
-                    DefaultExt = ".pdf",
-                    FileName = nomeArquivo
-                };
-
-                if (fileDialog.ShowDialog() == true)
-                {
-                    File.WriteAllBytes(fileDialog.FileName, pdfBytes);
-                    AlertService.Show("Relatório gerado com sucesso!", "Sucesso", AlertType.Success);
-                    Status = $"Relatório salvo em: {fileDialog.FileName}";
-                }
-                else
-                {
-                    Status = "Geração concluída, mas o salvamento foi cancelado.";
+                    _serviceProvider = app.ServiceProvider;
+                    _importacaoContextoService = _serviceProvider?.GetService<ImportacaoContextoService>();
                 }
             }
             catch (Exception ex)
             {
-                Status = statusErro;
-                var detalhe = ex.ToString();
-                if (detalhe.Length > 1400)
+                AlertService.Show($"Erro ao inicializar ViewModel: {ex.Message}", "Erro", AlertType.Error);
+            }
+
+            GerarLivroCaixaCommand = new AsyncRelayCommand(GerarLivroCaixaAsync);
+        }
+
+        /// <summary>
+        /// Gera o relatório do Livro Caixa em PDF
+        /// </summary>
+        private async Task GerarLivroCaixaAsync()
+        {
+            try
+            {
+                // Validar se um produtor foi selecionado
+                if (_importacaoContextoService?.ProdutorSelecionadoId == null ||
+                    string.IsNullOrWhiteSpace(_importacaoContextoService?.ProdutorSelecionadoNome))
                 {
-                    detalhe = detalhe[..1400] + "...";
+                    AlertService.Show("Selecione um Produtor Rural na Dashboard antes de gerar o relatório.", "Aviso", AlertType.Warning);
+                    return;
                 }
 
-                AlertService.Show($"Erro ao gerar relatório: {detalhe}", "Erro", AlertType.Error);
+                if (AnoBase <= 0)
+                {
+                    AlertService.Show("Digite um ano base válido.", "Validação", AlertType.Warning);
+                    return;
+                }
+
+                Carregando = true;
+                Status = "Gerando relatório...";
+
+                if (_serviceProvider == null)
+                {
+                    AlertService.Show("Serviço não inicializado.", "Erro", AlertType.Error);
+                    return;
+                }
+
+                // Gerar o HTML do relatório
+                using var scope = _serviceProvider.CreateScope();
+                var relatorioService = new RelatorioService(scope.ServiceProvider);
+                var caminhoHtml = await relatorioService.GerarLivroCaixaAsync(AnoBase, _importacaoContextoService.ProdutorSelecionadoId.Value);
+
+                // Converter HTML para PDF usando Playwright
+                await ConverterhtmlParaPdfAsync(caminhoHtml);
+
+                Status = "Relatório gerado com sucesso!";
+                AlertService.Show("Relatório gerado com sucesso!", "Sucesso", AlertType.Success);
+            }
+            catch (Exception ex)
+            {
+                Status = $"Erro: {ex.Message}";
+                AlertService.Show($"Erro ao gerar relatório: {ex.Message}", "Erro", AlertType.Error);
+            }
+            finally
+            {
+                Carregando = false;
+            }
+        }
+
+        /// <summary>
+        /// Instala o Playwright automaticamente se necessário
+        /// </summary>
+        private async Task InstalarPlaywrightAsync()
+        {
+            try
+            {
+                var playwrightPath = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                    ".playwright"
+                );
+
+                // Verificar se o Chromium já está instalado
+                if (Directory.Exists(playwrightPath))
+                {
+                    var chromiumPath = Path.Combine(playwrightPath, "chromium");
+                    if (Directory.Exists(chromiumPath))
+                        return; // Já está instalado
+                }
+
+                // Se não estiver, tentar instalar em thread separada
+                await Task.Run(() => Microsoft.Playwright.Program.Main(new[] { "install", "chromium" }));
+            }
+            catch (Exception ex)
+            {
+                // Se a instalação falhar, continuar mesmo assim
+                System.Diagnostics.Debug.WriteLine($"Aviso: Erro ao instalar Playwright: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Converte um arquivo HTML para PDF usando o Playwright
+        /// </summary>
+        private async Task ConverterhtmlParaPdfAsync(string caminhoHtml)
+        {
+            IBrowser? browser = null;
+            try
+            {
+                // Instalar Playwright se necessário
+                Status = "Instalando navegador (primeira vez)...";
+                await InstalarPlaywrightAsync();
+
+                // Inicializar Playwright
+                Status = "Gerando PDF...";
+                var playwright = await Playwright.CreateAsync();
+                browser = await playwright.Chromium.LaunchAsync();
+                var context = await browser.NewContextAsync(new BrowserNewContextOptions
+                {
+                    ViewportSize = new ViewportSize { Width = 800, Height = 1130 }
+                });
+                var page = await context.NewPageAsync();
+
+                // Navegar para o arquivo HTML
+                await page.GotoAsync($"file:///{caminhoHtml.Replace("\\", "/")}");
+
+                // Gerar PDF
+                var caminhoSaida = caminhoHtml.Replace(".html", ".pdf");
+                await page.PdfAsync(new PagePdfOptions
+                {
+                    Path = caminhoSaida,
+                    Format = "A4"
+                });
+
+                // Limpar
+                await context.CloseAsync();
+
+                // Abrir o PDF gerado
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = caminhoSaida,
+                    UseShellExecute = true
+                });
+            }
+            finally
+            {
+                if (browser != null)
+                {
+                    await browser.CloseAsync();
+                }
             }
         }
 

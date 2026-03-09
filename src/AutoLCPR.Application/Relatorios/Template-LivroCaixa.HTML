@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+ <link rel="stylesheet" href="styles.css" />
+  <title>Livro Caixa</title>
+</head>
+<body>
+  <!-- PÁGINA 1 -->
+  <section class="page">
+    <div class="logo">
+      <img src="header.img" alt="Header Image" />
+    </div>
+
+    <div class="cover-name">{{nome}}</div>
+
+    <div class="cover-title">LIVRO CAIXA</div>
+
+    <div class="cover-bottom">
+      <div>EX: <strong>{{exercicio}}</strong></div>
+      <div>ANO BASE: <strong>{{anoBase}}</strong></div>
+    </div>
+  </section>
+
+  <!-- PÁGINA 2 -->
+  <section class="page">
+    <div class="logo">
+      <img src="header.img" alt="Header Image" />
+    </div>
+
+    <div class="report-subtitle">
+      DEMONSTRATIVO DE RECEITAS E DESPESAS - ANO BASE {{anoBase}}
+    </div>
+
+    <div class="report-name">{{nome}}</div>
+
+    <div class="table-header">
+      <div></div>
+      <div>RECEITA</div>
+      <div>DESPESAS</div>
+    </div>
+
+    <table>
+      <tbody>
+        {{linhas}}
+      </tbody>
+      <tfoot>
+        <tr>
+          <td class="month">TOTAL</td>
+          <td>{{totalReceitas}}</td>
+          <td>{{totalDespesas}}</td>
+        </tr>
+      </tfoot>
+    </table>
+  </section>
+
+  <!-- PÁGINA 3 -->
+  <section class="page" style="display: flex; flex-direction: column; align-items: center; justify-content: flex-start;">
+    <div class="logo" style="text-align: center;">
+      <img src="header.img" alt="Header Image" />
+    </div>
+
+    <div class="chart-subtitle" style="text-align: center; width: 100%;">
+      DEMONSTRATIVO DE RECEITAS E DESPESAS - ANO BASE {{anoBase}}
+    </div>
+
+    <div class="chart-name" style="text-align: center; width: 100%;">{{nome}}</div>
+
+    <div class="chart-box" style="display: flex; flex-direction: column; align-items: center;">
+      <div class="chart-box-title" style="text-align: center;">DESPESAS X RECEITAS</div>
+
+      <div class="chart-area">
+        <div class="bars" style="display: flex; justify-content: center; align-items: flex-end;">
+          <div class="bar-wrap" style="text-align: center;">
+            <div class="bar-label">RECEITA<br />R$ {{totalReceitas}}</div>
+            <div class="bar receita" style="height: {{percReceitas}}%;"></div>
+          </div>
+
+          <div class="bar-wrap" style="text-align: center;">
+            <div class="bar-label">DESPESAS<br />R$ {{totalDespesas}}</div>
+            <div class="bar despesas" style="height: {{percDespesas}}%;"></div>
+          </div>
+
+          <div class="bar-wrap" style="text-align: center;">
+            <div class="bar-label">MARGEM<br />R$ {{totalMargem}}</div>
+            <div class="bar margem" style="height: {{percMargem}}%;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="legend" style="display: flex; justify-content: center; gap: 16px;">
+        <span><i style="background:#08b14c;"></i>RECEITA</span>
+        <span><i style="background:#f20f0f;"></i>DESPESAS</span>
+        <span><i style="background:#1ea6e7;"></i>MARGEM</span>
+      </div>
+    </div>
+
+    <div class="cards" style="display: flex; justify-content: center; gap: 16px; width: 100%;">
+      <div class="card" style="text-align: center;">
+        <div class="card-title">RECEITAS</div>
+        <div class="card-value"><span>R$</span><span>{{totalReceitas}}</span></div>
+      </div>
+      <div class="card" style="text-align: center;">
+        <div class="card-title">DESPESAS</div>
+        <div class="card-value"><span>R$</span><span>{{totalDespesas}}</span></div>
+      </div>
+      <div class="card" style="text-align: center;">
+        <div class="card-title">MARGEM</div>
+        <div class="card-value"><span>R$</span><span>{{totalMargem}}</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PÁGINA 4 -->
+  <section class="page">
+    <div class="logo">
+      <img src="header.img" alt="Header Image" />
+    </div>
+
+    <div class="cover-title">RELATORIO DE RECEITAS</div>
+    <div class="cover-name">{{nome}}</div>
+
+    <!-- INSERIR AQUI TABELA DE RECEITAS -->
+    <table class="detail-table">
+      <thead>
+        <tr>
+          <th>Data Emissão</th>
+          <th>Número NF</th>
+          <th>Origem</th>
+          <th>Descrição</th>
+          <th>Valor</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{linhasReceitas}}
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="4" style="text-align: right; font-weight: bold;">TOTAL</td>
+          <td style="font-weight: bold;">{{totalReceitas}}</td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <div class="cover-bottom">
+      <div>EX: <strong>{{exercicio}}</strong></div>
+      <div>ANO BASE: <strong>{{anoBase}}</strong></div>
+    </div>
+  </section>
+
+  <!-- PÁGINA 5 -->
+  <section class="page">
+    <div class="logo">
+      <img src="header.img" alt="Header Image" />
+    </div>
+
+    <div class="cover-title">RELATORIO DE DESPESAS</div>
+    <div class="cover-name">{{nome}}</div>
+
+    <!-- INSERIR AQUI TABELA DE DESPESAS -->
+    <table class="detail-table">
+      <thead>
+        <tr>
+          <th>Data Emissão</th>
+          <th>Número NF</th>
+          <th>Origem</th>
+          <th>Descrição</th>
+          <th>Valor</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{linhasDespesas}}
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="4" style="text-align: right; font-weight: bold;">TOTAL</td>
+          <td style="font-weight: bold;">{{totalDespesas}}</td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <div class="cover-bottom">
+      <div>EX: <strong>{{exercicio}}</strong></div>
+      <div>ANO BASE: <strong>{{anoBase}}</strong></div>
+    </div>
+  </section>
+     <!-- PÁGINA 7 -->
+  <section class="page">
+    <div class="logo">
+      <img src="header.img" alt="Header Image" />
+    </div>
+
+    <div class="cover-title">RELATORIO DO REBANHO</div>
+    <div class="cover-name">{{nome}}</div>
+  </section>
+
+    <!-- PÁGINA 8 -->
+  <section class="page">
+    <div class="logo">
+      <img src="header.img" alt="Header Image" />
+    </div>
+
+    <div class="report-subtitle">MOVIMENTAÇÃO DO REBANHO - ANO BASE {{anoBase}}</div>
+    <div class="report-name">{{nome}}</div>
+
+    <!-- INSERIR AQUI TABELA COM DADOS DE CADA REBANHO E NO FIM TOTALIZADORES -->
+
+    <!-- Tabela por espécie/categoria -->
+    {{rebanhoTabelas}}
+    <!--
+      Cada bloco de {{rebanhoTabelas}} deve gerar o seguinte HTML por espécie:
+
+      <h3 class="rebanho-especie">BOVINOS</h3>
+      <table class="detail-table rebanho-table">
+        <thead>
+          <tr>
+            <th>Categoria</th>
+            <th>Saldo Anterior</th>
+            <th>Entradas</th>
+            <th>Nascimentos</th>
+            <th>Saídas</th>
+            <th>Mortes</th>
+            <th>Consumo</th>
+            <th>Saldo Atual</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Bezerros(as) 0-12m</td>
+            <td>50</td>
+            <td>10</td>
+            <td>20</td>
+            <td>5</td>
+            <td>2</td>
+            <td>0</td>
+            <td>73</td>
+          </tr>
+          ...demais categorias...
+        </tbody>
+        <tfoot>
+          <tr>
+            <td style="font-weight: bold;">SUBTOTAL</td>
+            <td style="font-weight: bold;">{{subtotalSaldoAnterior}}</td>
+            <td style="font-weight: bold;">{{subtotalEntradas}}</td>
+            <td style="font-weight: bold;">{{subtotalNascimentos}}</td>
+            <td style="font-weight: bold;">{{subtotalSaidas}}</td>
+            <td style="font-weight: bold;">{{subtotalMortes}}</td>
+            <td style="font-weight: bold;">{{subtotalConsumo}}</td>
+            <td style="font-weight: bold;">{{subtotalSaldoAtual}}</td>
+          </tr>
+        </tfoot>
+      </table>
+    -->
+
+    <!-- Totalizador Geral -->
+    <table class="detail-table rebanho-table totalizador">
+      <thead>
+        <tr>
+          <th colspan="8" style="text-align: center; background-color: #2c3e50; color: #fff;">
+            TOTALIZAÇÃO GERAL DO REBANHO
+          </th>
+        </tr>
+        <tr>
+          <th>Descrição</th>
+          <th>Saldo Anterior</th>
+          <th>Entradas</th>
+          <th>Nascimentos</th>
+          <th>Saídas</th>
+          <th>Mortes</th>
+          <th>Consumo</th>
+          <th>Saldo Atual</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{linhasTotalizadorRebanho}}
+      </tbody>
+      <tfoot>
+        <tr>
+          <td style="font-weight: bold;">TOTAL GERAL</td>
+          <td style="font-weight: bold;">{{totalGeralSaldoAnterior}}</td>
+          <td style="font-weight: bold;">{{totalGeralEntradas}}</td>
+          <td style="font-weight: bold;">{{totalGeralNascimentos}}</td>
+          <td style="font-weight: bold;">{{totalGeralSaidas}}</td>
+          <td style="font-weight: bold;">{{totalGeralMortes}}</td>
+          <td style="font-weight: bold;">{{totalGeralConsumo}}</td>
+          <td style="font-weight: bold;">{{totalGeralSaldoAtual}}</td>
+        </tr>
+      </tfoot>
+    </table>
+  </section>
+</body>
+</html>
