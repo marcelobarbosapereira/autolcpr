@@ -57,14 +57,14 @@ Title="AutoLCPR"
         <DataTemplate DataType="{x:Type vm:RebanhoViewModel}">
             <local:RebanhoView/>
         </DataTemplate>
-        <DataTemplate DataType="{x:Type vm:RelatoriosViewModel}">
-            <local:RelatoriosView/>
-        </DataTemplate>
         <DataTemplate DataType="{x:Type vm:ImportarViewModel}">
             <local:ImportarView/>
         </DataTemplate>
         <DataTemplate DataType="{x:Type vm:ConfiguracoesViewModel}">
             <local:ConfiguracoesView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:RelatoriosViewModel}">
+            <local:RelatoriosView/>
         </DataTemplate>
     </Window.Resources>
     <Grid>
@@ -80,13 +80,13 @@ Title="AutoLCPR"
                 <Button Content="📄 Dashboard" 
                         Style="{StaticResource SidebarButtonStyle}"
                         Command="{Binding NavigateToHomeCommand}" FontSize="20"/>
-                <Button Content="📊 Relatórios" 
-                        Style="{StaticResource SidebarButtonStyle}"
-                        Command="{Binding NavigateToRelatoriosCommand}" FontSize="20"/>
-                <Button Content=" ⬇️   Importar" 
+                <Button Content=" ⬇️   Importar"
                         Style="{StaticResource SidebarButtonStyle}"
                         Command="{Binding NavigateToImportarCommand}" FontSize="20" HorizontalAlignment="Center" Width="179" Click="Button_Click"/>
-                <Button Content="⚙️ Configurações" 
+                <Button Content="📊 Relatórios"
+                        Style="{StaticResource SidebarButtonStyle}"
+                        Command="{Binding NavigateToRelatoriosCommand}" FontSize="20" HorizontalAlignment="Center"/>
+                <Button Content="⚙️ Configurações"
                         Style="{StaticResource SidebarButtonStyle}"
                         Command="{Binding NavigateToConfiguracoesCommand}" FontSize="20" HorizontalAlignment="Center"/>
             </StackPanel>

@@ -137,4 +137,52 @@ namespace AutoLCPR.UI.WPF.Converters
             throw new NotImplementedException();
         }
     }
+
+    /// <summary>
+    /// Converter para inverter um valor booleano
+    /// </summary>
+    public class InverseBooleanConverter : IValueConverter
+    {
+        public object Convert(object? value, Type targetType, object? parameter, CultureInfo cultureInfo)
+        {
+            if (value is bool boolValue)
+            {
+                return !boolValue;
+            }
+            return false;
+        }
+
+        public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo cultureInfo)
+        {
+            if (value is bool boolValue)
+            {
+                return !boolValue;
+            }
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Converter para converter booleano em Visibility
+    /// </summary>
+    public class BooleanToVisibilityConverter : IValueConverter
+    {
+        public object Convert(object? value, Type targetType, object? parameter, CultureInfo cultureInfo)
+        {
+            if (value is bool boolValue)
+            {
+                return boolValue ? Visibility.Visible : Visibility.Collapsed;
+            }
+            return Visibility.Collapsed;
+        }
+
+        public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo cultureInfo)
+        {
+            if (value is Visibility visibility)
+            {
+                return visibility == Visibility.Visible;
+            }
+            return false;
+        }
+    }
 }

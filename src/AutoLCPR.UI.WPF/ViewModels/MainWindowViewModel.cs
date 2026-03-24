@@ -28,9 +28,9 @@ namespace AutoLCPR.UI.WPF.ViewModels
         public ICommand NavigateToProdutorCommand { get; }
         public ICommand NavigateToNotaFiscalCommand { get; }
         public ICommand NavigateToRebanhoCommand { get; }
-        public ICommand NavigateToRelatoriosCommand { get; }
         public ICommand NavigateToImportarCommand { get; }
         public ICommand NavigateToConfiguracoesCommand { get; }
+        public ICommand NavigateToRelatoriosCommand { get; }
 
         public MainWindowViewModel()
         {
@@ -38,9 +38,9 @@ namespace AutoLCPR.UI.WPF.ViewModels
             NavigateToProdutorCommand = new RelayCommand(() => NavigateTo(new ProdutorViewModel()));
             NavigateToNotaFiscalCommand = new RelayCommand(() => NavigateTo(new NotaFiscalViewModel()));
             NavigateToRebanhoCommand = new RelayCommand(() => NavigateTo(new RebanhoViewModel()));
-            NavigateToRelatoriosCommand = new RelayCommand(() => NavigateTo(new RelatoriosViewModel()));
             NavigateToImportarCommand = new RelayCommand(() => NavigateTo(new ImportarViewModel()));
             NavigateToConfiguracoesCommand = new RelayCommand(() => NavigateTo(new ConfiguracoesViewModel()));
+            NavigateToRelatoriosCommand = new RelayCommand(() => NavigateTo(new RelatoriosViewModel()));
 
             // Começar com a View Home
             CurrentView = new HomeViewModel();

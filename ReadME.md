@@ -1,164 +1,141 @@
-# Sistema de Gestão Fiscal e Rebanho Rural
+# AutoLCPR
 
-Software desktop para produtores rurais, focado no controle de:
-- Notas fiscais (entradas e saídas)
-- Receitas e despesas
-- Controle de rebanho por inscrição estadual
-- Relatórios mensais e anuais
-- Integração automatizada com SEFAZ-MS e DF-e
+Sistema desktop (WPF e .NET) para gestao fiscal, financeira e de rebanho para produtor rural.
 
----
+## Visao Geral
 
-## 🎯 Objetivo
+O AutoLCPR centraliza em uma unica aplicacao:
 
-Centralizar a gestão fiscal e zootécnica do produtor rural em um sistema:
-- Offline-first
-- Seguro
-- Auditável
-- Compatível com obrigações fiscais brasileiras
+- Cadastro de produtores.
+- Controle de notas fiscais (entrada e saida).
+- Controle de movimentacoes de rebanho.
+- Captura e importacao de NF-e via consulta SEFAZ-MS.
+- Geracao de relatorios em PDF (anual, rebanho e financeiro por periodo).
 
----
+Projeto organizado em arquitetura em camadas:
 
-## 🧱 Arquitetura
+- `UI (WPF)` -> `Application` -> `Domain` -> `Infrastructure (EF Core + SQLite)`
 
-- Plataforma: **.NET 8**
-- Tipo: **Desktop**
-- Banco de dados: **SQLite embutido**
-- ORM: **Entity Framework Core**
-- Automação:
-  - Playwright (.NET)
-  - Webservice DF-e (oficial)
-- Relatórios: PDF / Excel
+## Stack Tecnica
 
-Arquitetura em camadas:
-UI → Application → Domain → Infrastructure → SQLite
+- `.NET 8`
+- `WPF (Windows)`
+- `Entity Framework Core 8`
+- `SQLite`
+- `CommunityToolkit.Mvvm`
+- `Microsoft.Web.WebView2`
+- `Microsoft.Playwright`
+- `itext7` (geracao de PDF)
 
----
+## Estrutura do Projeto
 
-## 🐄 Funcionalidades
-
-### Rebanhos
-- Cadastro manual de rebanhos
-- Controle de entradas, saídas, nascimentos e mortes
-- Saldo automático
-
-### Fiscal / Financeiro
-- Cadastro manual de notas fiscais
-- Receitas e despesas
-- Relatórios mensais e anuais
-- Exportação de dados
-
-### Automação Fiscal
-- Coleta de chaves de acesso via SEFAZ-MS
-- Integração oficial DF-e
-- Download e armazenamento de XML
-- Consulta por NSU
-
----
-
-## 🔐 Segurança
-
-- Certificado digital A1 ou A3
-- Banco local criptografado
-- Backup automático
-- Logs fiscais
-
----
-
-## 📦 Banco de Dados
-
-- SQLite local
-- Offline-first
-- Estrutura versionada
-- Backup manual e automático
-
----
-## 🧱 Diagrama de Classes
-
-```mermaid
-classDiagram
-    class Produtor {
-        +int Id
-        +String Nome
-        +List~Rebanho~ rebanho
-        +List~NotaFiscal~ receitas
-        +List~NotaFiscal~ despesas
-
-    }
-
-    class NotaFiscal {
-        +String numero
-        +String chaveAcesso
-        +double valor
-        +Date dataEmissao
-        +String nomeEmitente
-        +String nomeDestinatario
-        +String documentoEmitente
-        +String documentoDestinatario
-    }
-
-    class Rebanho {
-        +String inscricao
-        +int nascimentos
-        +int mortes
-        +int entradas
-        +int saidas
-    }
-
-    class tipoNota {
-        <<<enumeration>>>
-        RECEITA
-        DESPESA
-    }
-```
-## ↔️ Diagrama ER
-
-```mermaid
-erDiagram
-    PRODUTOR ||--o{ REBANHO : "possui"
-    PRODUTOR ||--o{ NOTA_FISCAL : "gera"
-    TIPO_NOTA ||--o{ NOTA_FISCAL : "classifica"
-
-    PRODUTOR {
-        int id PK
-        string nome
-    }
-
-    NOTA_FISCAL {
-        string chave_acesso PK
-        string numero
-        double valor
-        date data_emissao
-        string nome_emitente
-        string nome_destinatario
-        string documento_emitente
-        string documento_destinatario
-        int id_produtor FK
-        int id_tipo_nota FK
-    }
-
-    REBANHO {
-        string inscricao PK
-        int nascimentos
-        int mortes
-        int entradas
-        int saidas
-        int id_produtor FK
-    }
-
-    TIPO_NOTA {
-        int id PK
-        string descricao "RECEITA ou DESPESA"
-    }
+```text
+autolcpr/
+    AutoLCPR.sln
+    ReadME.md
+    nfe_config.json
+    src/
+        AutoLCPR.Domain/          # Entidades e contratos de repositorio
+        AutoLCPR.Application/     # Regras de negocio, servicos e relatorios
+        AutoLCPR.Infrastructure/  # EF Core, DbContext, migrations, repositorios
+        AutoLCPR.UI.WPF/          # Interface desktop (WPF)
 ```
 
-## 🚀 Status do Projeto
+## Requisitos
 
-🟡 Em desenvolvimento  
-🔜 Primeira versão funcional prevista após Sprint 3
+- Windows 10/11.
+- .NET SDK 8.0+.
+- Runtime do WebView2 instalado no sistema.
+- Acesso a internet para fluxo de captura automatizada da SEFAZ.
 
----
+## Como Executar
 
-## 📄 Licença
+Na raiz do repositorio (`autolcpr`):
 
-Projeto de uso restrito e privado.
+```powershell
+dotnet restore
+dotnet build AutoLCPR.sln
+dotnet run --project src/AutoLCPR.UI.WPF/AutoLCPR.UI.WPF.csproj
+```
+
+## Configuracao
+
+### 1) Banco de dados e app settings
+
+Arquivo: `src/AutoLCPR.UI.WPF/appsettings.Development.json`
+
+- `ConnectionStrings:DefaultConnection`: usa `Data Source={DatabasePath}/autolcpr.db`.
+- `DatabasePath`: por padrao `%AppData%/AutoLCPR/data`.
+
+Na inicializacao, a aplicacao:
+
+- Resolve variaveis de ambiente do caminho.
+- Cria a pasta de dados automaticamente.
+- Testa conexao com o banco.
+- Aplica migrations automaticamente.
+
+### 2) Configuracao de importacao NFe
+
+Arquivo: `nfe_config.json`
+
+Campos principais:
+
+- `pastaHtml`: pasta base para armazenar HTML de consulta por produtor.
+- `ignorarCFOP` e `ignorarNatureza`: filtros de descarte de notas.
+- `cfopReceita` e `cfopDespesa`: regras de classificacao por CFOP.
+- `naturezaReceita` e `naturezaDespesa`: regras de classificacao por natureza.
+
+Se o arquivo de configuracao nao existir na pasta de execucao, ele e criado automaticamente com valores padrao.
+
+## Fluxos Principais
+
+### Cadastro e operacao manual
+
+- Produtores.
+- Notas fiscais.
+- Rebanhos.
+
+### Importacao fiscal (SEFAZ-MS)
+
+- Tela `Importar` usa WebView2 para navegacao.
+- Captura chaves de acesso e detalhes da consulta.
+- Salva HTML por produtor (`{pastaHtml}/{cpf}/`).
+- Importa e converte para lancamentos/notas no banco.
+
+### Relatorios
+
+- Relatorio anual consolidado.
+- Relatorio de movimentacao de rebanho.
+- Relatorio financeiro por periodo e tipo (Receita/Despesa).
+- Saida em PDF com escolha de destino pelo usuario.
+
+## Banco de Dados e Migrations
+
+As migrations estao em `src/AutoLCPR.Infrastructure/Migrations`.
+
+A aplicacao aplica migrations no startup, mas se voce quiser operar manualmente via CLI:
+
+```powershell
+dotnet tool install --global dotnet-ef
+dotnet ef migrations list --project src/AutoLCPR.Infrastructure/AutoLCPR.Infrastructure.csproj --startup-project src/AutoLCPR.UI.WPF/AutoLCPR.UI.WPF.csproj
+dotnet ef database update --project src/AutoLCPR.Infrastructure/AutoLCPR.Infrastructure.csproj --startup-project src/AutoLCPR.UI.WPF/AutoLCPR.UI.WPF.csproj
+```
+
+## Troubleshooting
+
+- Erro `MC3000` em `ImportarView.xaml`:
+    verifique se ha marcadores de conflito Git (`<<<<<<<`, `=======`, `>>>>>>>`) em XAML/ViewModel.
+- Falha ao abrir WebView2:
+    confirme o runtime do WebView2 instalado no Windows.
+- Falha no banco ao iniciar:
+    verifique permissao de escrita em `%AppData%/AutoLCPR/data`.
+- Falha no fluxo Playwright:
+    valide conectividade de rede e mudancas na pagina da SEFAZ.
+
+## Status
+
+Projeto em desenvolvimento ativo.
+
+## Licenca
+
+Uso restrito/privado.
