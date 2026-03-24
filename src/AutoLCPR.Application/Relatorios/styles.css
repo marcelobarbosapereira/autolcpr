@@ -1,0 +1,358 @@
+@page {
+      size: A4;
+      margin: 0;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: "Arial", sans-serif;
+      color: #2f2b38;
+      background: #fff;
+      width: 100%;
+      height: 100%;
+    }
+
+    .page {
+      width: 100%;
+      height: 100vh;
+      box-sizing: border-box;
+      padding: 12mm 12mm;
+      position: relative;
+      page-break-after: always;
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: space-between !important;
+      align-items: center !important;
+    }
+
+    .page:first-of-type {
+      padding: 20mm 12mm;
+    }
+
+    .page:last-child {
+      page-break-after: auto;
+    }
+
+    .page:first-of-type .logo img {
+      max-height: 220px;
+    }
+
+    .page:not(:first-of-type) .logo img {
+      max-height: 80px;
+    }
+
+    .logo {
+      text-align: center;
+      margin-top: 0;
+      flex-shrink: 0;
+    }
+
+    .logo img {
+      max-width: 90%;
+      height: auto;
+      display: block;
+      margin: 0 auto;
+    }
+
+    /* Página 1 (capa) */
+    .cover-name {
+      margin-top: 0;
+      text-align: center;
+      font-family: "Times New Roman", serif;
+      font-size: 26pt;
+      text-transform: uppercase;
+      margin-bottom: 0;
+      margin-top: 3mm;
+    }
+
+    .cover-title {
+      text-align: center;
+      font-family: "Times New Roman", serif;
+      font-size: 54pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .cover-bottom {
+      font-family: "Times New Roman", serif;
+      font-size: 16pt;
+      line-height: 1.8;
+      text-transform: uppercase;
+      text-align: center;
+      width: 100%;
+      margin-top: 0;
+    }
+
+    .cover-bottom div {
+      margin-bottom: 8pt;
+    }
+
+    /* Página 2 (demonstrativo) */
+    .report-subtitle {
+      margin-top: 0;
+      text-align: center;
+      font-size: 11pt;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .report-name {
+      margin-top: 3mm;
+      text-align: center;
+      font-size: 14pt;
+      font-weight: 700;
+      text-decoration: underline;
+      text-transform: uppercase;
+      margin-bottom: 6mm;
+    }
+
+    .table-header {
+      margin-top: 0;
+      margin-bottom: 2mm;
+      width: 100%;
+      display: grid;
+      grid-template-columns: 40% 30% 30%;
+      font-size: 10pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      text-align: center;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0;
+      font-size: 10pt;
+    }
+
+    th, td {
+      border: 1px solid #6d6a73;
+      padding: 6px 8px;
+      text-align: center;
+    }
+
+    td.month {
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    tfoot td {
+      font-weight: 700;
+    }
+
+    /* Página 3 (gráfico demonstrativo) */
+    .chart-subtitle {
+      margin-top: 0;
+      text-align: center;
+      font-size: 11pt;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .chart-name {
+      margin-top: 3mm;
+      text-align: center;
+      font-size: 14pt;
+      font-weight: 700;
+      text-decoration: underline;
+      text-transform: uppercase;
+    }
+
+    .chart-box {
+      width: 100%;
+      margin: 8mm 0 0 0;
+      border: none;
+      padding: 0;
+      box-sizing: border-box;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chart-box-title {
+      text-align: center;
+      font-size: 12pt;
+      text-transform: uppercase;
+      border-bottom: none;
+      padding-bottom: 4px;
+      margin-bottom: 6mm;
+    }
+
+    .chart-area {
+      margin-top: 0;
+      flex: 1;
+      border-bottom: none;
+      position: relative;
+      background: none;
+      height: 280px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding-bottom: 10px;
+    }
+
+    .bars {
+      position: relative;
+      display: flex !important;
+      justify-content: center !important;
+      align-items: flex-end !important;
+      gap: 80px;
+      padding: 0 40px;
+      box-sizing: border-box;
+      width: 100%;
+      height: 100%;
+    }
+
+    .bar-wrap {
+      width: 100px;
+      text-align: center;
+      display: flex;
+      flex-direction: column-reverse;
+      align-items: center;
+      justify-content: flex-start;
+      height: 100%;
+      gap: 8px;
+    }
+
+    .bar-label {
+      font-size: 8pt;
+      line-height: 1.3;
+      text-transform: uppercase;
+      color: #000;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .bar {
+      width: 48px;
+      margin: 0 auto;
+      min-height: 12px;
+      background-color: #ccc;
+    }
+
+    .bar.receita { background: #08b14c !important; }
+    .bar.despesas { background: #f20f0f !important; }
+    .bar.margem { background: #1ea6e7 !important; }
+
+    .legend {
+      text-align: center;
+      font-size: 8pt;
+      margin-top: 6mm;
+      text-transform: uppercase;
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+    }
+
+    .legend span {
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .legend i {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      vertical-align: middle;
+      margin-right: 0;
+    }
+
+    .cards {
+      width: 100%;
+      margin: 8mm 0 0 0;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .card {
+      flex: 1;
+      border: 1px solid #000;
+      min-height: 70px;
+      padding: 10px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .card-title {
+      text-align: center;
+      font-size: 11pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .card-value {
+      margin-top: 0;
+      display: flex;
+      justify-content: center;
+      font-size: 10pt;
+      white-space: nowrap;
+      gap: 4px;
+    }
+
+    /* Páginas 4, 5, 6 (detalhes) */
+    .detail-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 6mm 0;
+      font-size: 9pt;
+    }
+
+    .detail-table thead {
+      background-color: #f5f5f5;
+    }
+
+    .detail-table th {
+      border: 1px solid #ccc;
+      padding: 6px;
+      text-align: center;
+      font-weight: 700;
+      font-size: 9pt;
+    }
+
+    .detail-table td {
+      border: 1px solid #ccc;
+      padding: 4px 6px;
+      font-size: 8pt;
+    }
+
+    .detail-table tfoot td {
+      font-weight: 700;
+      background-color: #f5f5f5;
+    }
+
+    .rebanho-especie {
+      font-size: 10pt;
+      font-weight: 700;
+      margin-top: 8mm;
+      margin-bottom: 4mm;
+      text-transform: uppercase;
+    }
+
+    .rebanho-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 4mm 0;
+      font-size: 8pt;
+    }
+
+    .rebanho-table th,
+    .rebanho-table td {
+      border: 1px solid #ccc;
+      padding: 4px;
+      text-align: center;
+    }
+
+    .rebanho-table.totalizador {
+      margin-top: 12mm;
+    }
