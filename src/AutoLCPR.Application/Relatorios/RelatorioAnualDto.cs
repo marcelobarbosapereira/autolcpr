@@ -8,6 +8,7 @@ public sealed class RelatorioAnualDto
     public int AnoBase { get; init; }
     public DateTime DataInicio { get; init; }
     public DateTime DataFim { get; init; }
+    public DateTime DataGeracao { get; init; }
     public required IReadOnlyList<ResumoMensalDto> ResumoMensal { get; init; }
     public decimal TotalReceitas { get; init; }
     public decimal TotalDespesas { get; init; }

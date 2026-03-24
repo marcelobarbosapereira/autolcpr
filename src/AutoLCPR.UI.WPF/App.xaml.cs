@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using AutoLCPR.Infrastructure.Data;
 using AutoLCPR.UI.WPF.Services;
+using QuestPDF.Infrastructure;
 
 namespace AutoLCPR.UI.WPF
 {
@@ -29,6 +30,7 @@ namespace AutoLCPR.UI.WPF
         {
             this.DispatcherUnhandledException += App_DispatcherUnhandledException;
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
+            QuestPDF.Settings.License = LicenseType.Community;
             
             try
             {
