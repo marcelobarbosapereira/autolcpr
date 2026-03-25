@@ -15,17 +15,20 @@ public sealed class RelatorioAnualService : IRelatorioAnualService
     private readonly IMovimentacaoRebanhoRepository _movimentacaoRebanhoRepository;
     private readonly IRebanhoRepository _rebanhoRepository;
     private readonly IProdutorRepository _produtorRepository;
+    private readonly IConfiguracaoRepository _configuracaoRepository;
 
     public RelatorioAnualService(
         ILancamentoRepository lancamentoRepository,
         IMovimentacaoRebanhoRepository movimentacaoRebanhoRepository,
         IRebanhoRepository rebanhoRepository,
-        IProdutorRepository produtorRepository)
+        IProdutorRepository produtorRepository,
+        IConfiguracaoRepository configuracaoRepository)
     {
         _lancamentoRepository = lancamentoRepository;
         _movimentacaoRebanhoRepository = movimentacaoRebanhoRepository;
         _rebanhoRepository = rebanhoRepository;
         _produtorRepository = produtorRepository;
+        _configuracaoRepository = configuracaoRepository;
     }
 
     public byte[] GerarRelatorioAnual(int anoFiscal)
@@ -212,8 +215,39 @@ public sealed class RelatorioAnualService : IRelatorioAnualService
             despesas.Add(item);
         }
 
-        var document = new RelatorioAnualDocument(modelo, receitas, despesas);
+        var imagemCabecalho = await CarregarImagemCabecalhoAsync(cancellationToken);
+        var document = new RelatorioAnualGeralDocument(modelo, receitas, despesas, imagemCabecalho);
         return document.GeneratePdf();
+    }
+
+    private async Task<byte[]?> CarregarImagemCabecalhoAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var configuracao = await _configuracaoRepository.GetConfiguracaoAsync();
+            var caminhoImagem = configuracao?.ImagemCabecalhoRelatorios;
+
+            if (string.IsNullOrWhiteSpace(caminhoImagem))
+            {
+                return null;
+            }
+
+            if (!Path.IsPathRooted(caminhoImagem))
+            {
+                caminhoImagem = Path.GetFullPath(caminhoImagem);
+            }
+
+            if (!File.Exists(caminhoImagem))
+            {
+                return null;
+            }
+
+            return await File.ReadAllBytesAsync(caminhoImagem, cancellationToken);
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     private static (DateTime dataInicio, DateTime dataFim) ResolverPeriodo(int anoFiscal, DateTime? dataInicioCustom = null, DateTime? dataFimCustom = null)

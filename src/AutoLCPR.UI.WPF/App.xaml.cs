@@ -137,7 +137,7 @@ namespace AutoLCPR.UI.WPF
 
             // Registrar serviços de infraestrutura
             var connectionString = ResolveConnectionString();
-            services.AddInfrastructureServices(connectionString);
+            AutoLCPR.Infrastructure.Data.InfrastructureServiceExtensions.AddInfrastructureServices(services, connectionString);
             AutoLCPR.Application.DependencyInjectionExtensions.AddApplicationServices(services);
             services.AddSingleton<ImportacaoContextoService>();
             services.AddTransient<ISefazAutomationService, SefazAutomationService>();
