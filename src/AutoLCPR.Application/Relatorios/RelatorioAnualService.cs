@@ -82,7 +82,9 @@ public sealed class RelatorioAnualService : IRelatorioAnualService
                 TotalNascimentos = item.Nascimentos,
                 TotalCompras = item.Entradas,
                 TotalVendas = item.Saidas,
-                TotalObitos = item.Mortes
+                TotalObitos = item.Mortes,
+                SaldoInicial = item.SaldoInicial,
+                SaldoFinal = item.SaldoFinal
             })
             .DistinctBy(item => new { item.NomePropriedade, item.InscricaoPropriedade })
             .ToList();
@@ -96,7 +98,9 @@ public sealed class RelatorioAnualService : IRelatorioAnualService
                 TotalNascimentos = 0,
                 TotalCompras = 0,
                 TotalVendas = 0,
-                TotalObitos = 0
+                TotalObitos = 0,
+                SaldoInicial = 0,
+                SaldoFinal = 0
             });
         }
 

@@ -1,4 +1,5 @@
 using AutoLCPR.UI.WPF.ViewModels;
+using System.Windows;
 using System.Windows.Controls;
 
 namespace AutoLCPR.UI.WPF.Views
@@ -12,6 +13,11 @@ namespace AutoLCPR.UI.WPF.Views
         {
             InitializeComponent();
             DataContext = new ProdutorViewModel();
+        }
+
+        private void FecharJanela_Click(object sender, RoutedEventArgs e)
+        {
+            Window.GetWindow(this)?.Close();
         }
     }
 }

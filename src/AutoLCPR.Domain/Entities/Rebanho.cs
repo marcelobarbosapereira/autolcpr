@@ -13,6 +13,8 @@ namespace AutoLCPR.Domain.Entities
         public int Nascimentos { get; set; }
         public int Entradas { get; set; }
         public int Saidas { get; set; }
+        public decimal SaldoInicial { get; set; }
+        public decimal SaldoFinal { get; set; }
 
         // Relacionamento com Produtor
         public int ProdutorId { get; set; }

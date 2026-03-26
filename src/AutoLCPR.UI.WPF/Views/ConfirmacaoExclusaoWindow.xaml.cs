@@ -9,13 +9,18 @@ namespace AutoLCPR.UI.WPF.Views
         {
             InitializeComponent();
             ProdutorNameTextBlock.Text = nomeProduto;
+            var multiplosItens = nomeProduto.Contains("selecionad");
             
             // Adaptar mensagem baseado no tipo de item
-            string mensagem = tipoItem.ToLower() switch
+            string mensagem = (tipoItem.ToLower(), multiplosItens) switch
             {
-                "despesa" => "Deseja realmente EXCLUIR a despesa selecionada?",
-                "receita" => "Deseja realmente EXCLUIR a receita selecionada?",
-                "propriedade" => "Deseja realmente EXCLUIR a propriedade selecionada?",
+                ("despesa", true) => "Deseja realmente EXCLUIR as despesas selecionadas?",
+                ("despesa", false) => "Deseja realmente EXCLUIR a despesa selecionada?",
+                ("receita", true) => "Deseja realmente EXCLUIR as receitas selecionadas?",
+                ("receita", false) => "Deseja realmente EXCLUIR a receita selecionada?",
+                ("propriedade", true) => "Deseja realmente EXCLUIR as propriedades selecionadas?",
+                ("propriedade", false) => "Deseja realmente EXCLUIR a propriedade selecionada?",
+                (_, true) => "Deseja realmente EXCLUIR os itens selecionados?",
                 _ => "Deseja realmente EXCLUIR o item selecionado?"
             };
             
@@ -31,6 +36,12 @@ namespace AutoLCPR.UI.WPF.Views
         private void SimClick(object sender, RoutedEventArgs e)
         {
             this.DialogResult = true;
+            this.Close();
+        }
+
+        private void FecharClick(object sender, RoutedEventArgs e)
+        {
+            this.DialogResult = false;
             this.Close();
         }
 

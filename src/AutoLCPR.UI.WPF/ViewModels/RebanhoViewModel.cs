@@ -24,6 +24,8 @@ namespace AutoLCPR.UI.WPF.ViewModels
         private int _nascimentos = 0;
         private int _entradas = 0;
         private int _saidas = 0;
+        private decimal _saldoInicial = 0;
+        private decimal _saldoFinal = 0;
         private string _produtorNome = string.Empty;
         private int _produtorId = 0;
         private bool _isEditMode = false;
@@ -147,6 +149,32 @@ namespace AutoLCPR.UI.WPF.ViewModels
             }
         }
 
+        public decimal SaldoInicial
+        {
+            get => _saldoInicial;
+            set
+            {
+                if (_saldoInicial != value)
+                {
+                    _saldoInicial = value;
+                    OnPropertyChanged(nameof(SaldoInicial));
+                }
+            }
+        }
+
+        public decimal SaldoFinal
+        {
+            get => _saldoFinal;
+            set
+            {
+                if (_saldoFinal != value)
+                {
+                    _saldoFinal = value;
+                    OnPropertyChanged(nameof(SaldoFinal));
+                }
+            }
+        }
+
         public ICommand SalvarCommand { get; }
         public ICommand LimparCommand { get; }
 
@@ -189,6 +217,8 @@ namespace AutoLCPR.UI.WPF.ViewModels
                     rebanhoExistente.Nascimentos = Nascimentos;
                     rebanhoExistente.Entradas = Entradas;
                     rebanhoExistente.Saidas = Saidas;
+                    rebanhoExistente.SaldoInicial = SaldoInicial;
+                    rebanhoExistente.SaldoFinal = SaldoFinal;
                     rebanhoExistente.ProdutorId = ProdutorId;
 
                     await repo.UpdateAsync(rebanhoExistente);
@@ -205,6 +235,8 @@ namespace AutoLCPR.UI.WPF.ViewModels
                         Nascimentos = Nascimentos,
                         Entradas = Entradas,
                         Saidas = Saidas,
+                        SaldoInicial = SaldoInicial,
+                        SaldoFinal = SaldoFinal,
                         ProdutorId = ProdutorId
                     };
 
@@ -268,6 +300,8 @@ namespace AutoLCPR.UI.WPF.ViewModels
             Nascimentos = 0;
             Entradas = 0;
             Saidas = 0;
+            SaldoInicial = 0;
+            SaldoFinal = 0;
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;

@@ -43,7 +43,9 @@ public sealed class RelatorioRebanhoService : IRelatorioRebanhoService
                 TotalNascimentos = item.Nascimentos,
                 TotalCompras = item.Entradas,
                 TotalVendas = item.Saidas,
-                TotalObitos = item.Mortes
+                TotalObitos = item.Mortes,
+                SaldoInicial = item.SaldoInicial,
+                SaldoFinal = item.SaldoFinal
             })
             .ToList();
 
@@ -56,7 +58,9 @@ public sealed class RelatorioRebanhoService : IRelatorioRebanhoService
                 TotalNascimentos = 0,
                 TotalCompras = 0,
                 TotalVendas = 0,
-                TotalObitos = 0
+                TotalObitos = 0,
+                SaldoInicial = 0,
+                SaldoFinal = 0
             });
         }
 
@@ -66,7 +70,9 @@ public sealed class RelatorioRebanhoService : IRelatorioRebanhoService
             TotalCompras = propriedades.Sum(item => item.TotalCompras),
             TotalVendas = propriedades.Sum(item => item.TotalVendas),
             TotalObitos = propriedades.Sum(item => item.TotalObitos),
-            SaldoRebanhoAno = propriedades.Sum(item => item.TotalNascimentos + item.TotalCompras - item.TotalVendas - item.TotalObitos)
+            SaldoRebanhoAno = propriedades.Sum(item => item.TotalNascimentos + item.TotalCompras - item.TotalVendas - item.TotalObitos),
+            TotalSaldoInicial = propriedades.Sum(item => item.SaldoInicial),
+            TotalSaldoFinal = propriedades.Sum(item => item.SaldoFinal)
         };
 
         var modelo = new RelatorioRebanhoDto
@@ -84,7 +90,9 @@ public sealed class RelatorioRebanhoService : IRelatorioRebanhoService
                 TotalCompras = resumoConsolidado.TotalCompras,
                 TotalVendas = resumoConsolidado.TotalVendas,
                 TotalObitos = resumoConsolidado.TotalObitos,
-                SaldoRebanhoAno = resumoConsolidado.SaldoRebanhoAno
+                SaldoRebanhoAno = resumoConsolidado.SaldoRebanhoAno,
+                TotalSaldoInicial = resumoConsolidado.TotalSaldoInicial,
+                TotalSaldoFinal = resumoConsolidado.TotalSaldoFinal
             }
         };
 

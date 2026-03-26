@@ -6,6 +6,15 @@ using AutoLCPR.Application.DTOs;
 
 namespace AutoLCPR.Application.Services
 {
+    public sealed class ImportacaoProgresso
+    {
+        public string Etapa { get; init; } = string.Empty;
+        public string? Mensagem { get; init; }
+        public int Atual { get; init; }
+        public int Total { get; init; }
+        public bool Indeterminado { get; init; }
+    }
+
     /// <summary>
     /// Serviço para importar e processar Notas Fiscais do HTML
     /// </summary>
@@ -22,7 +31,7 @@ namespace AutoLCPR.Application.Services
         /// Importa todas as notas fiscais da pasta do produtor
         /// Estrutura: {pastaRaiz}/{cpfProdutor}
         /// </summary>
-        public async Task<List<NotaFiscalDTO>> ImportarNotasAsync(string cpfProdutor, int? produtorId = null)
+        public async Task<List<NotaFiscalDTO>> ImportarNotasAsync(string cpfProdutor, int? produtorId = null, IProgress<ImportacaoProgresso>? progresso = null)
         {
             if (string.IsNullOrWhiteSpace(cpfProdutor))
             {
@@ -62,11 +71,21 @@ namespace AutoLCPR.Application.Services
                 throw new Exception($"Nenhum arquivo HTML encontrado em: {pastaProdutoror}");
             }
 
-            foreach (var arquivo in arquivosHtml)
+            progresso?.Report(new ImportacaoProgresso
             {
+                Etapa = "Importação de NF-es",
+                Mensagem = "Lendo e validando arquivos HTML capturados...",
+                Atual = 0,
+                Total = arquivosHtml.Length,
+                Indeterminado = false
+            });
+
+            for (var i = 0; i < arquivosHtml.Length; i++)
+            {
+                var arquivo = arquivosHtml[i];
                 try
                 {
-                    var nota = ProcessarArquivoHtml(arquivo, config, produtorId);
+                    var nota = ProcessarArquivoHtml(arquivo, config, cpfProdutor, produtorId);
                     if (nota != null)
                     {
                         notas.Add(nota);
@@ -77,6 +96,15 @@ namespace AutoLCPR.Application.Services
                     Console.WriteLine($"Erro ao processar arquivo {arquivo}: {ex.Message}");
                     // Continuar processando outros arquivos
                 }
+
+                progresso?.Report(new ImportacaoProgresso
+                {
+                    Etapa = "Importação de NF-es",
+                    Mensagem = $"Lendo arquivos HTML {i + 1}/{arquivosHtml.Length}...",
+                    Atual = i + 1,
+                    Total = arquivosHtml.Length,
+                    Indeterminado = false
+                });
             }
 
             if (notas.Count == 0 && arquivosHtml.Length > 0)
@@ -122,7 +150,7 @@ namespace AutoLCPR.Application.Services
         /// <summary>
         /// Processa um arquivo HTML e retorna a nota fiscal se passar nas validações
         /// </summary>
-        private NotaFiscalDTO? ProcessarArquivoHtml(string caminhoArquivo, NfeImportConfig config, int? produtorId)
+        private NotaFiscalDTO? ProcessarArquivoHtml(string caminhoArquivo, NfeImportConfig config, string cpfProdutor, int? produtorId)
         {
             var html = new HtmlDocument();
             html.Load(caminhoArquivo);
@@ -176,7 +204,7 @@ namespace AutoLCPR.Application.Services
             var cfopsStr = string.Join(",", itens.Select(i => i.CFOP).Distinct());
 
             // Determinar o tipo de lançamento
-            var tipo = DeterminarTipoLancamento(config, itens, natureza, produtorId);
+            var tipo = DeterminarTipoLancamento(config, itens, natureza, cpfProdutor, emitenteCpfCnpj, destinatarioCpfCnpj);
 
             var nota = new NotaFiscalDTO
             {
@@ -420,7 +448,9 @@ namespace AutoLCPR.Application.Services
             NfeImportConfig config,
             List<(string Descricao, string CFOP)> itens,
             string natureza,
-            int? produtorId)
+            string cpfProdutor,
+            string emitenteCpfCnpj,
+            string destinatarioCpfCnpj)
         {
             // REGRA 3: Verificar CFOPReceita
             foreach (var cfop in itens.Select(i => i.CFOP).Distinct())
@@ -460,8 +490,20 @@ namespace AutoLCPR.Application.Services
                 }
             }
 
-            // Lógica padrão: se emitente == produtor, é receita, senão é despesa
-            // Por enquanto, retornar DESPESA como padrão (não temos acesso ao CNPJ do emitente aqui)
+            // Padrão: produtor em Origem (emitente) → Receita; produtor em Destino (destinatário) → Despesa
+            if (!string.IsNullOrEmpty(cpfProdutor))
+            {
+                if (cpfProdutor == emitenteCpfCnpj)
+                {
+                    return TipoLancamento.Receita;
+                }
+
+                if (cpfProdutor == destinatarioCpfCnpj)
+                {
+                    return TipoLancamento.Despesa;
+                }
+            }
+
             return TipoLancamento.Despesa;
         }
 

@@ -18,6 +18,8 @@ CREATE TABLE Rebanhos (
     Nascimentos INTEGER NOT NULL DEFAULT 0,
     Entradas INTEGER NOT NULL DEFAULT 0,
     Saidas INTEGER NOT NULL DEFAULT 0,
+    SaldoInicial REAL NOT NULL DEFAULT 0,
+    SaldoFinal REAL NOT NULL DEFAULT 0,
     ProdutorId INTEGER NOT NULL,
     CreatedAt TEXT NOT NULL DEFAULT (datetime('now')),
     UpdatedAt TEXT,

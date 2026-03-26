@@ -38,4 +38,6 @@ public sealed class PropriedadeRelatorioDto
     public int TotalCompras { get; init; }
     public int TotalVendas { get; init; }
     public int TotalObitos { get; init; }
+    public decimal SaldoInicial { get; init; }
+    public decimal SaldoFinal { get; init; }
 }

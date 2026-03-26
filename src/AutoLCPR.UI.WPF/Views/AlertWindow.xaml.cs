@@ -45,6 +45,11 @@ namespace AutoLCPR.UI.WPF.Views
             Close();
         }
 
+        private void FecharClick(object sender, RoutedEventArgs e)
+        {
+            Close();
+        }
+
         private void WindowKeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Escape)

@@ -80,15 +80,15 @@ Title="AutoLCPR"
                 <Button Content="📄 Dashboard" 
                         Style="{StaticResource SidebarButtonStyle}"
                         Command="{Binding NavigateToHomeCommand}" FontSize="20"/>
-                <Button Content=" ⬇️   Importar"
+                <Button Content="⬇ Importar"
                         Style="{StaticResource SidebarButtonStyle}"
-                        Command="{Binding NavigateToImportarCommand}" FontSize="20" HorizontalAlignment="Center" Width="179" Click="Button_Click"/>
+                    Command="{Binding NavigateToImportarCommand}" FontSize="20" Click="Button_Click"/>
                 <Button Content="📊 Relatórios"
                         Style="{StaticResource SidebarButtonStyle}"
-                        Command="{Binding NavigateToRelatoriosCommand}" FontSize="20" HorizontalAlignment="Center"/>
-                <Button Content="⚙️ Configurações"
+                    Command="{Binding NavigateToRelatoriosCommand}" FontSize="20"/>
+                <Button Content="⚙ Configurações"
                         Style="{StaticResource SidebarButtonStyle}"
-                        Command="{Binding NavigateToConfiguracoesCommand}" FontSize="20" HorizontalAlignment="Center"/>
+                    Command="{Binding NavigateToConfiguracoesCommand}" FontSize="20"/>
             </StackPanel>
         </Border>
 

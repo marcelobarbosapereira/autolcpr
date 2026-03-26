@@ -44,6 +44,52 @@
                                 FontWeight="SemiBold"
                                 Margin="0,0,0,14"/>
 
+                        <Border Background="#F7FAFC"
+                                BorderBrush="#D7E3F4"
+                                BorderThickness="1"
+                                CornerRadius="6"
+                                Padding="12"
+                                Margin="0,0,0,14">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsProgressVisible}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+
+                            <StackPanel>
+                                <Grid Margin="0,0,0,6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock Text="{Binding ProgressTitle}"
+                                               FontWeight="SemiBold"
+                                               Foreground="#1F2937"/>
+
+                                    <TextBlock Grid.Column="1"
+                                               Text="{Binding ProgressSummary}"
+                                               Foreground="#4B5563"/>
+                                </Grid>
+
+                                <ProgressBar Minimum="0"
+                                             Maximum="{Binding ProgressMaximum, Mode=OneWay}"
+                                             Value="{Binding ProgressValue, Mode=OneWay}"
+                                             IsIndeterminate="{Binding IsProgressIndeterminate, Mode=OneWay}"
+                                             Height="12"
+                                             Margin="0,0,0,8"/>
+
+                                <TextBlock Text="{Binding ProgressMessage}"
+                                           TextWrapping="Wrap"
+                                           Foreground="#5F6368"/>
+                            </StackPanel>
+                        </Border>
+
                         <TextBlock Text="{Binding Status}" Foreground="#5F6368" TextWrapping="Wrap" Margin="0,0,0,14"/>
 
                         <TextBlock Text="Chaves consultadas" FontWeight="SemiBold" Margin="0,0,0,8" Foreground="#202124"/>

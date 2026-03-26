@@ -23,6 +23,12 @@ namespace AutoLCPR.UI.WPF.ViewModels
         private readonly IServiceProvider? _serviceProvider;
         private readonly ImportacaoContextoService? _contextoImportacao;
         private string _status = "Abra o site no painel para iniciar.";
+        private string _progressTitle = "Progresso";
+        private string _progressMessage = string.Empty;
+        private double _progressValue;
+        private double _progressMaximum = 1d;
+        private bool _isProgressVisible;
+        private bool _isProgressIndeterminate;
         private bool _isImportando;
         private DateTime _dataInicio;
         private DateTime _dataFim;
@@ -80,6 +86,109 @@ namespace AutoLCPR.UI.WPF.ViewModels
             }
         }
 
+        public string ProgressTitle
+        {
+            get => _progressTitle;
+            private set
+            {
+                if (_progressTitle != value)
+                {
+                    _progressTitle = value;
+                    OnPropertyChanged(nameof(ProgressTitle));
+                }
+            }
+        }
+
+        public string ProgressMessage
+        {
+            get => _progressMessage;
+            private set
+            {
+                if (_progressMessage != value)
+                {
+                    _progressMessage = value;
+                    OnPropertyChanged(nameof(ProgressMessage));
+                }
+            }
+        }
+
+        public double ProgressValue
+        {
+            get => _progressValue;
+            private set
+            {
+                if (Math.Abs(_progressValue - value) > 0.001d)
+                {
+                    _progressValue = value;
+                    OnPropertyChanged(nameof(ProgressValue));
+                    OnPropertyChanged(nameof(ProgressSummary));
+                }
+            }
+        }
+
+        public double ProgressMaximum
+        {
+            get => _progressMaximum;
+            private set
+            {
+                var normalized = value <= 0 ? 1d : value;
+                if (Math.Abs(_progressMaximum - normalized) > 0.001d)
+                {
+                    _progressMaximum = normalized;
+                    OnPropertyChanged(nameof(ProgressMaximum));
+                    OnPropertyChanged(nameof(ProgressSummary));
+                }
+            }
+        }
+
+        public bool IsProgressVisible
+        {
+            get => _isProgressVisible;
+            private set
+            {
+                if (_isProgressVisible != value)
+                {
+                    _isProgressVisible = value;
+                    OnPropertyChanged(nameof(IsProgressVisible));
+                }
+            }
+        }
+
+        public bool IsProgressIndeterminate
+        {
+            get => _isProgressIndeterminate;
+            private set
+            {
+                if (_isProgressIndeterminate != value)
+                {
+                    _isProgressIndeterminate = value;
+                    OnPropertyChanged(nameof(IsProgressIndeterminate));
+                    OnPropertyChanged(nameof(ProgressSummary));
+                }
+            }
+        }
+
+        public string ProgressSummary
+        {
+            get
+            {
+                if (!IsProgressVisible)
+                {
+                    return string.Empty;
+                }
+
+                if (IsProgressIndeterminate)
+                {
+                    return "Em andamento";
+                }
+
+                var total = Math.Max(1d, ProgressMaximum);
+                var atual = Math.Min(total, Math.Max(0d, ProgressValue));
+                var percentual = atual / total * 100d;
+                return $"{atual:0}/{total:0} ({percentual:0}%)";
+            }
+        }
+
         public bool IsImportando
         {
             get => _isImportando;
@@ -134,6 +243,12 @@ namespace AutoLCPR.UI.WPF.ViewModels
 
             IsImportando = true;
             Status = "Capturando NF-es de todas as páginas da consulta...";
+            AplicarProgresso(new ImportacaoProgresso
+            {
+                Etapa = "Captura de NF-es",
+                Mensagem = "Preparando captura no portal da SEFAZ...",
+                Indeterminado = true
+            });
 
             try
             {
@@ -185,11 +300,35 @@ namespace AutoLCPR.UI.WPF.ViewModels
                 var diretorioHtmlConsulta = await nfeImportService.CriarPastaProdutorAsync(cpfProdutor);
                 var htmlSalvos = 0;
 
-                foreach (var item in notasCapturadas.GroupBy(item => item.ChaveAcesso).Select(item => item.First()))
+                var notasDistintas = notasCapturadas.GroupBy(item => item.ChaveAcesso).Select(item => item.First()).ToList();
+                AplicarProgresso(new ImportacaoProgresso
                 {
-                    if (SalvarHtmlConsultaSeDisponivel(diretorioHtmlConsulta, item))
+                    Etapa = "Captura de NF-es",
+                    Mensagem = "Salvando HTMLs capturados...",
+                    Atual = 0,
+                    Total = notasDistintas.Count,
+                    Indeterminado = notasDistintas.Count == 0
+                });
+
+                for (var i = 0; i < notasDistintas.Count; i++)
+                {
+                    if (await SalvarHtmlConsultaSeDisponivelAsync(diretorioHtmlConsulta, notasDistintas[i]))
                     {
                         htmlSalvos++;
+                    }
+
+                    AplicarProgresso(new ImportacaoProgresso
+                    {
+                        Etapa = "Captura de NF-es",
+                        Mensagem = $"Salvando HTMLs capturados {i + 1}/{notasDistintas.Count}...",
+                        Atual = i + 1,
+                        Total = notasDistintas.Count,
+                        Indeterminado = false
+                    });
+
+                    if ((i + 1) % 10 == 0)
+                    {
+                        await Task.Yield();
                     }
                 }
 
@@ -202,8 +341,31 @@ namespace AutoLCPR.UI.WPF.ViewModels
             }
             finally
             {
+                LimparProgresso();
                 IsImportando = false;
             }
+        }
+
+        public void AplicarProgresso(ImportacaoProgresso progresso)
+        {
+            ProgressTitle = string.IsNullOrWhiteSpace(progresso.Etapa) ? "Progresso" : progresso.Etapa;
+            ProgressMessage = progresso.Mensagem ?? string.Empty;
+            ProgressMaximum = progresso.Total <= 0 ? 1d : progresso.Total;
+            ProgressValue = Math.Max(0d, Math.Min(progresso.Atual, ProgressMaximum));
+            IsProgressIndeterminate = progresso.Indeterminado;
+            IsProgressVisible = true;
+            OnPropertyChanged(nameof(ProgressSummary));
+        }
+
+        public void LimparProgresso()
+        {
+            ProgressTitle = "Progresso";
+            ProgressMessage = string.Empty;
+            ProgressMaximum = 1d;
+            ProgressValue = 0d;
+            IsProgressIndeterminate = false;
+            IsProgressVisible = false;
+            OnPropertyChanged(nameof(ProgressSummary));
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
@@ -281,7 +443,7 @@ namespace AutoLCPR.UI.WPF.ViewModels
             return descricao;
         }
 
-        private static bool SalvarHtmlConsultaSeDisponivel(string diretorio, SefazNFeCapturada item)
+        private static async Task<bool> SalvarHtmlConsultaSeDisponivelAsync(string diretorio, SefazNFeCapturada item)
         {
             if (string.IsNullOrWhiteSpace(item.HtmlConsulta) || string.IsNullOrWhiteSpace(item.ChaveAcesso))
             {
@@ -292,7 +454,7 @@ namespace AutoLCPR.UI.WPF.ViewModels
             {
                 var nomeArquivo = $"{item.ChaveAcesso}.html";
                 var filePath = Path.Combine(diretorio, nomeArquivo);
-                File.WriteAllText(filePath, item.HtmlConsulta);
+                await File.WriteAllTextAsync(filePath, item.HtmlConsulta);
                 return true;
             }
             catch
@@ -317,6 +479,12 @@ namespace AutoLCPR.UI.WPF.ViewModels
 
             IsImportando = true;
             Status = "Importando notas fiscais dos arquivos HTML...";
+            AplicarProgresso(new ImportacaoProgresso
+            {
+                Etapa = "Importação de NF-es",
+                Mensagem = "Preparando importação e validando arquivos...",
+                Indeterminado = true
+            });
 
             try
             {
@@ -348,7 +516,8 @@ namespace AutoLCPR.UI.WPF.ViewModels
                 await dbContext.Database.ExecuteSqlInterpolatedAsync($"DELETE FROM NotasFiscais WHERE ProdutorId = {produtorId}");
 
                 // Importar notas usando o NfeImportService
-                var notasDto = await nfeImportService.ImportarNotasAsync(cpfProdutor, produtorId);
+                var progressoLeitura = new Progress<ImportacaoProgresso>(AplicarProgresso);
+                var notasDto = await nfeImportService.ImportarNotasAsync(cpfProdutor, produtorId, progressoLeitura);
 
                 if (notasDto.Count == 0)
                 {
@@ -362,13 +531,40 @@ namespace AutoLCPR.UI.WPF.ViewModels
                 var arquivosHtml = Directory.GetFiles(await nfeImportService.ObterCaminoPastaProdutorAsync(cpfProdutor), "*.html").Length;
                 var notasIgnoradasPorRegra = arquivosHtml - notasDto.Count;
 
-                foreach (var notaDto in notasDto)
+                AplicarProgresso(new ImportacaoProgresso
                 {
+                    Etapa = "Importação de NF-es",
+                    Mensagem = "Gravando notas e lançamentos no banco...",
+                    Atual = 0,
+                    Total = notasDto.Count,
+                    Indeterminado = false
+                });
+
+                for (var i = 0; i < notasDto.Count; i++)
+                {
+                    var notaDto = notasDto[i];
+                    AplicarProgresso(new ImportacaoProgresso
+                    {
+                        Etapa = "Importação de NF-es",
+                        Mensagem = $"Processando nota {i + 1}/{notasDto.Count}...",
+                        Atual = i,
+                        Total = notasDto.Count,
+                        Indeterminado = false
+                    });
+
                     // Verificar se a nota já existe no banco
                     var notaExistente = await notaFiscalRepository.GetByChaveAcessoAsync(notaDto.Chave);
                     if (notaExistente != null)
                     {
                         notasJaExistiam++;
+                        AplicarProgresso(new ImportacaoProgresso
+                        {
+                            Etapa = "Importação de NF-es",
+                            Mensagem = $"Processando nota {i + 1}/{notasDto.Count}...",
+                            Atual = i + 1,
+                            Total = notasDto.Count,
+                            Indeterminado = false
+                        });
                         continue;
                     }
 
@@ -465,6 +661,20 @@ namespace AutoLCPR.UI.WPF.ViewModels
 
                     await lancamentoRepository.AddAsync(lancamento);
                     lancamentosCriados++;
+
+                    AplicarProgresso(new ImportacaoProgresso
+                    {
+                        Etapa = "Importação de NF-es",
+                        Mensagem = $"Processando nota {i + 1}/{notasDto.Count}...",
+                        Atual = i + 1,
+                        Total = notasDto.Count,
+                        Indeterminado = false
+                    });
+
+                    if ((i + 1) % 10 == 0)
+                    {
+                        await Task.Yield();
+                    }
                 }
 
                 // Montar mensagem detalhada
@@ -497,6 +707,7 @@ namespace AutoLCPR.UI.WPF.ViewModels
             }
             finally
             {
+                LimparProgresso();
                 IsImportando = false;
             }
         }

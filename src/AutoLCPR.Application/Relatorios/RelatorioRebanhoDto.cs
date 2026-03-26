@@ -19,6 +19,8 @@ public sealed class ResumoRebanhoAnualDto
     public int TotalVendas { get; init; }
     public int TotalObitos { get; init; }
     public int SaldoRebanhoAno { get; init; }
+    public decimal TotalSaldoInicial { get; init; }
+    public decimal TotalSaldoFinal { get; init; }
 }
 
 public sealed class PropriedadeRebanhoDto
@@ -29,4 +31,6 @@ public sealed class PropriedadeRebanhoDto
     public int TotalCompras { get; init; }
     public int TotalVendas { get; init; }
     public int TotalObitos { get; init; }
+    public decimal SaldoInicial { get; init; }
+    public decimal SaldoFinal { get; init; }
 }

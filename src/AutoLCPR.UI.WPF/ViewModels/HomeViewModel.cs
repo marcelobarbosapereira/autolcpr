@@ -36,6 +36,7 @@ namespace AutoLCPR.UI.WPF.ViewModels
         public ObservableCollection<NotaFiscal> Despesas { get; } = new();
         public ObservableCollection<NotaFiscal> Receitas { get; } = new();
         public ObservableCollection<Rebanho> Rebanhos { get; } = new();
+        public ObservableCollection<NotaFiscal> NotasSelecionadas { get; } = new();
 
         public int TotalRebanhos
         {
@@ -110,6 +111,8 @@ namespace AutoLCPR.UI.WPF.ViewModels
                 if (_filtroSelecionado != value)
                 {
                     _filtroSelecionado = value;
+                    NotasSelecionadas.Clear();
+                    NotaFiscalSelecionada = null;
                     AtualizarTextoButton();
                     OnPropertyChanged(nameof(FiltroSelecionado));
                 }
@@ -185,6 +188,19 @@ namespace AutoLCPR.UI.WPF.ViewModels
                     OnPropertyChanged(nameof(NotaFiscalSelecionada));
                 }
             }
+        }
+
+        public void DefinirNotasSelecionadas(System.Collections.Generic.IEnumerable<NotaFiscal> notas)
+        {
+            var notasLista = notas.ToList();
+
+            NotasSelecionadas.Clear();
+            foreach (var nota in notasLista)
+            {
+                NotasSelecionadas.Add(nota);
+            }
+
+            NotaFiscalSelecionada = notasLista.LastOrDefault();
         }
 
         /// <summary>
@@ -496,9 +512,11 @@ namespace AutoLCPR.UI.WPF.ViewModels
         /// </summary>
         private async void ExcluirDespesa()
         {
-            if (NotaFiscalSelecionada == null)
+            var notasParaExcluir = ObterNotasSelecionadas();
+
+            if (notasParaExcluir.Count == 0)
             {
-                AlertService.Show("Selecione uma despesa para excluir.", "Atencao", AlertType.Warning);
+                AlertService.Show("Selecione ao menos uma despesa para excluir.", "Atencao", AlertType.Warning);
                 return;
             }
 
@@ -508,7 +526,11 @@ namespace AutoLCPR.UI.WPF.ViewModels
                 return;
             }
 
-            var dialog = new Views.ConfirmacaoExclusaoWindow($"despesa de {NotaFiscalSelecionada.DataEmissao:dd/MM/yyyy}", "despesa");
+            var descricao = notasParaExcluir.Count == 1
+                ? $"despesa de {notasParaExcluir[0].DataEmissao:dd/MM/yyyy}"
+                : $"{notasParaExcluir.Count} despesas selecionadas";
+
+            var dialog = new Views.ConfirmacaoExclusaoWindow(descricao, "despesa");
             if (dialog.ShowDialog() == true)
             {
                 if (_serviceProvider == null)
@@ -521,8 +543,17 @@ namespace AutoLCPR.UI.WPF.ViewModels
                 {
                     using var scope = _serviceProvider.CreateScope();
                     var repo = scope.ServiceProvider.GetRequiredService<INotaFiscalRepository>();
-                    await repo.DeleteAsync(NotaFiscalSelecionada.Id);
-                    AlertService.Show("Despesa excluida com sucesso!", "Sucesso", AlertType.Success);
+                    foreach (var nota in notasParaExcluir)
+                    {
+                        await repo.DeleteAsync(nota.Id);
+                    }
+
+                    var mensagem = notasParaExcluir.Count == 1
+                        ? "Despesa excluida com sucesso!"
+                        : $"{notasParaExcluir.Count} despesas excluidas com sucesso!";
+
+                    AlertService.Show(mensagem, "Sucesso", AlertType.Success);
+                    NotasSelecionadas.Clear();
                     NotaFiscalSelecionada = null;
                     await LoadDadosProdutorAsync();
                 }
@@ -538,9 +569,11 @@ namespace AutoLCPR.UI.WPF.ViewModels
         /// </summary>
         private async void ExcluirReceita()
         {
-            if (NotaFiscalSelecionada == null)
+            var notasParaExcluir = ObterNotasSelecionadas();
+
+            if (notasParaExcluir.Count == 0)
             {
-                AlertService.Show("Selecione uma receita para excluir.", "Atencao", AlertType.Warning);
+                AlertService.Show("Selecione ao menos uma receita para excluir.", "Atencao", AlertType.Warning);
                 return;
             }
 
@@ -550,7 +583,11 @@ namespace AutoLCPR.UI.WPF.ViewModels
                 return;
             }
 
-            var dialog = new Views.ConfirmacaoExclusaoWindow($"receita de {NotaFiscalSelecionada.DataEmissao:dd/MM/yyyy}", "receita");
+            var descricao = notasParaExcluir.Count == 1
+                ? $"receita de {notasParaExcluir[0].DataEmissao:dd/MM/yyyy}"
+                : $"{notasParaExcluir.Count} receitas selecionadas";
+
+            var dialog = new Views.ConfirmacaoExclusaoWindow(descricao, "receita");
             if (dialog.ShowDialog() == true)
             {
                 if (_serviceProvider == null)
@@ -563,8 +600,17 @@ namespace AutoLCPR.UI.WPF.ViewModels
                 {
                     using var scope = _serviceProvider.CreateScope();
                     var repo = scope.ServiceProvider.GetRequiredService<INotaFiscalRepository>();
-                    await repo.DeleteAsync(NotaFiscalSelecionada.Id);
-                    AlertService.Show("Receita excluida com sucesso!", "Sucesso", AlertType.Success);
+                    foreach (var nota in notasParaExcluir)
+                    {
+                        await repo.DeleteAsync(nota.Id);
+                    }
+
+                    var mensagem = notasParaExcluir.Count == 1
+                        ? "Receita excluida com sucesso!"
+                        : $"{notasParaExcluir.Count} receitas excluidas com sucesso!";
+
+                    AlertService.Show(mensagem, "Sucesso", AlertType.Success);
+                    NotasSelecionadas.Clear();
                     NotaFiscalSelecionada = null;
                     await LoadDadosProdutorAsync();
                 }
@@ -617,6 +663,18 @@ namespace AutoLCPR.UI.WPF.ViewModels
             }
         }
 
+        private System.Collections.Generic.List<NotaFiscal> ObterNotasSelecionadas()
+        {
+            if (NotasSelecionadas.Count > 0)
+            {
+                return NotasSelecionadas.ToList();
+            }
+
+            return NotaFiscalSelecionada != null
+                ? new System.Collections.Generic.List<NotaFiscal> { NotaFiscalSelecionada }
+                : new System.Collections.Generic.List<NotaFiscal>();
+        }
+
         private async Task LoadProdutoresAsync()
         {
             if (_serviceProvider == null)
@@ -663,6 +721,8 @@ namespace AutoLCPR.UI.WPF.ViewModels
             SaldoFinanceiro = 0m;
             ReceitasMes = 0m;
             DespesasMes = 0m;
+            NotasSelecionadas.Clear();
+            NotaFiscalSelecionada = null;
             Despesas.Clear();
             Receitas.Clear();
             Rebanhos.Clear();

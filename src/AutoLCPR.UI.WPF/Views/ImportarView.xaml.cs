@@ -120,7 +120,7 @@ namespace AutoLCPR.UI.WPF.Views
                     using var reader = new StreamReader(stream);
                     var responseBody = await reader.ReadToEndAsync();
 
-                    var notas = ExtrairNotasDaRespostaCarregarLista(responseBody);
+                    var notas = await Task.Run(() => ExtrairNotasDaRespostaCarregarLista(responseBody));
                     if (notas.Count == 0)
                     {
                         return;
@@ -134,9 +134,15 @@ namespace AutoLCPR.UI.WPF.Views
                         }
                     }
 
-                    if (DataContext is ImportarViewModel viewModel)
+                    if (DataContext is ImportarViewModel)
                     {
-                        viewModel.Status = $"{_notasCapturadasPorChave.Count} NF-e capturada(s) da consulta. Clique em 'Capturar NF-es'.";
+                        await AtualizarStatusAsync($"{_notasCapturadasPorChave.Count} NF-e capturada(s) da consulta. Clique em 'Capturar NF-es'.");
+                        await AtualizarProgressoAsync(new ImportacaoProgresso
+                        {
+                            Etapa = "Captura de NF-es",
+                            Mensagem = $"{_notasCapturadasPorChave.Count} NF-e capturada(s) da consulta.",
+                            Indeterminado = true
+                        });
                     }
 
                     lock (_capturaEventoLock)
@@ -152,7 +158,7 @@ namespace AutoLCPR.UI.WPF.Views
                     var stream = await e.Response.GetContentAsync();
                     using var reader = new StreamReader(stream);
                     var responseBody = await reader.ReadToEndAsync();
-                    var detalheUrl = ExtrairDetalheUrlDaRespostaVisualizarDnfe(responseBody);
+                    var detalheUrl = await Task.Run(() => ExtrairDetalheUrlDaRespostaVisualizarDnfe(responseBody));
 
                     if (!string.IsNullOrWhiteSpace(detalheUrl))
                     {
@@ -243,6 +249,12 @@ namespace AutoLCPR.UI.WPF.Views
             var paginacao = await ObterPaginacaoGridAsync();
             if (paginacao == null)
             {
+                await AtualizarProgressoAsync(new ImportacaoProgresso
+                {
+                    Etapa = "Captura de NF-es",
+                    Mensagem = "Coletando chaves da página atual...",
+                    Indeterminado = true
+                });
                 var chaves = await CapturarChavesDaPaginaAsync();
                 return chaves
                     .Select(chave => new SefazNFeCapturada
@@ -264,13 +276,34 @@ namespace AutoLCPR.UI.WPF.Views
             }
 
             var totalPaginas = Math.Max(1, paginacao.LastPage);
+            await AtualizarProgressoAsync(new ImportacaoProgresso
+            {
+                Etapa = "Captura de NF-es",
+                Mensagem = $"Capturando páginas da consulta 0/{totalPaginas}...",
+                Atual = 0,
+                Total = totalPaginas,
+                Indeterminado = false
+            });
+
             for (var pagina = 1; pagina <= totalPaginas; pagina++)
             {
+                await AtualizarStatusAsync($"Capturando página {pagina}/{totalPaginas} da consulta...");
                 var carregou = await RecarregarPaginaGridAsync(pagina);
+                await AtualizarProgressoAsync(new ImportacaoProgresso
+                {
+                    Etapa = "Captura de NF-es",
+                    Mensagem = $"Capturando páginas da consulta {pagina}/{totalPaginas}...",
+                    Atual = pagina,
+                    Total = totalPaginas,
+                    Indeterminado = false
+                });
+
                 if (!carregou)
                 {
                     continue;
                 }
+
+                await Task.Yield();
             }
 
             List<SefazNFeCapturada> capturadas;
@@ -294,10 +327,27 @@ namespace AutoLCPR.UI.WPF.Views
             }
 
             var diretorioCache = await ObterDiretorioCacheHtmlProdutorAsync();
+            await AtualizarProgressoAsync(new ImportacaoProgresso
+            {
+                Etapa = "Captura de NF-es",
+                Mensagem = $"Detalhando NF-es 0/{notas.Count}...",
+                Atual = 0,
+                Total = notas.Count,
+                Indeterminado = notas.Count == 0
+            });
 
             for (var i = 0; i < notas.Count; i++)
             {
                 var nota = notas[i];
+                await AtualizarStatusAsync($"Detalhando NF-e {i + 1}/{notas.Count}...");
+                await AtualizarProgressoAsync(new ImportacaoProgresso
+                {
+                    Etapa = "Captura de NF-es",
+                    Mensagem = $"Detalhando NF-es {i + 1}/{notas.Count}...",
+                    Atual = i,
+                    Total = notas.Count,
+                    Indeterminado = false
+                });
                 var detalhes = await ExtrairDetalhesNotaAsync(nota.ChaveAcesso, nota.IdentificadorDetalhe, diretorioCache);
                 if (detalhes != null)
                 {
@@ -307,9 +357,18 @@ namespace AutoLCPR.UI.WPF.Views
                     nota.HtmlConsulta = detalhes.HtmlConsulta;
                 }
 
-                if (DataContext is ImportarViewModel viewModel)
+                await AtualizarProgressoAsync(new ImportacaoProgresso
                 {
-                    viewModel.Status = $"Detalhando NF-e {i + 1}/{notas.Count}...";
+                    Etapa = "Captura de NF-es",
+                    Mensagem = $"Detalhando NF-es {i + 1}/{notas.Count}...",
+                    Atual = i + 1,
+                    Total = notas.Count,
+                    Indeterminado = false
+                });
+
+                if ((i + 1) % 5 == 0)
+                {
+                    await Task.Yield();
                 }
             }
         }
@@ -365,7 +424,7 @@ namespace AutoLCPR.UI.WPF.Views
                 return null;
             }
 
-            var detalheCache = TentarLerDetalheDoCache(diretorioCache, chaveAcesso);
+            var detalheCache = await TentarLerDetalheDoCacheAsync(diretorioCache, chaveAcesso);
             if (detalheCache != null)
             {
                 return detalheCache;
@@ -520,7 +579,7 @@ namespace AutoLCPR.UI.WPF.Views
                 return null;
             }
 
-            var detalheExtraido = ExtrairDetalhesDeHtml(html);
+            var detalheExtraido = await Task.Run(() => ExtrairDetalhesDeHtml(html));
             detalheExtraido.Sucesso = true;
             detalheExtraido.DetalheUrl = detalheUrl;
             detalheExtraido.HtmlConsulta = html;
@@ -688,7 +747,7 @@ namespace AutoLCPR.UI.WPF.Views
             }
         }
 
-        private static SefazNFeDetalheCapturado? TentarLerDetalheDoCache(string? diretorioCache, string chaveAcesso)
+        private static async Task<SefazNFeDetalheCapturado?> TentarLerDetalheDoCacheAsync(string? diretorioCache, string chaveAcesso)
         {
             if (string.IsNullOrWhiteSpace(diretorioCache) || !Directory.Exists(diretorioCache))
             {
@@ -703,13 +762,45 @@ namespace AutoLCPR.UI.WPF.Views
 
             try
             {
-                var html = File.ReadAllText(filePath);
-                return ExtrairDetalhesDeHtml(html);
+                var html = await File.ReadAllTextAsync(filePath);
+                return await Task.Run(() => ExtrairDetalhesDeHtml(html));
             }
             catch
             {
                 return null;
             }
+        }
+
+        private Task AtualizarStatusAsync(string status)
+        {
+            if (DataContext is not ImportarViewModel viewModel)
+            {
+                return Task.CompletedTask;
+            }
+
+            if (Dispatcher.CheckAccess())
+            {
+                viewModel.Status = status;
+                return Task.CompletedTask;
+            }
+
+            return Dispatcher.InvokeAsync(() => viewModel.Status = status, System.Windows.Threading.DispatcherPriority.Background).Task;
+        }
+
+        private Task AtualizarProgressoAsync(ImportacaoProgresso progresso)
+        {
+            if (DataContext is not ImportarViewModel viewModel)
+            {
+                return Task.CompletedTask;
+            }
+
+            if (Dispatcher.CheckAccess())
+            {
+                viewModel.AplicarProgresso(progresso);
+                return Task.CompletedTask;
+            }
+
+            return Dispatcher.InvokeAsync(() => viewModel.AplicarProgresso(progresso), System.Windows.Threading.DispatcherPriority.Background).Task;
         }
 
         private static SefazNFeDetalheCapturado ExtrairDetalhesDeHtml(string html)

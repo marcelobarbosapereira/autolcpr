@@ -2,8 +2,25 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              Background="#F8F9FA">
-    <StackPanel Margin="20,15"
-                MaxWidth="900">
+    <Border Background="White" BorderBrush="#E8EAED" BorderThickness="1" CornerRadius="8">
+        <Grid Background="White">
+            <Button Content="X"
+                    Width="34"
+                    Height="34"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Top"
+                    Margin="0,12,12,0"
+                    FontSize="13"
+                    FontWeight="Bold"
+                    Background="White"
+                    BorderBrush="#DADCE0"
+                    BorderThickness="1"
+                    Foreground="#5F6368"
+                    Cursor="Hand"
+                    Click="FecharJanela_Click"
+                    Panel.ZIndex="10"/>
+            <StackPanel Margin="20,15"
+                        MaxWidth="900">
             <!-- Header -->
             <Border Background="White" BorderBrush="#E8EAED" BorderThickness="0,0,0,1" Padding="15,12" Margin="0,0,0,15">
                 <TextBlock 
@@ -24,6 +41,7 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
@@ -139,8 +157,44 @@
                         </Border>
                     </StackPanel>
 
+                    <!-- Saldo Inicial -->
+                    <StackPanel Grid.Row="4" Grid.Column="0" Margin="0,0,10,20">
+                        <TextBlock Text="Saldo Inicial" 
+                                   FontSize="14" 
+                                   FontWeight="SemiBold" 
+                                   Foreground="#202124"
+                                   Margin="0,0,0,8"/>
+                        <Border BorderBrush="#DADCE0" BorderThickness="1" CornerRadius="4">
+                            <TextBox Text="{Binding SaldoInicial, UpdateSourceTrigger=PropertyChanged}"
+                                     Height="40"
+                                     Padding="12,10"
+                                     FontSize="14"
+                                     Background="White"
+                                     BorderThickness="0"
+                                     Foreground="#202124"/>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Saldo Final -->
+                    <StackPanel Grid.Row="4" Grid.Column="1" Margin="10,0,0,20">
+                        <TextBlock Text="Saldo Final" 
+                                   FontSize="14" 
+                                   FontWeight="SemiBold" 
+                                   Foreground="#202124"
+                                   Margin="0,0,0,8"/>
+                        <Border BorderBrush="#DADCE0" BorderThickness="1" CornerRadius="4">
+                            <TextBox Text="{Binding SaldoFinal, UpdateSourceTrigger=PropertyChanged}"
+                                     Height="40"
+                                     Padding="12,10"
+                                     FontSize="14"
+                                     Background="White"
+                                     BorderThickness="0"
+                                     Foreground="#202124"/>
+                        </Border>
+                    </StackPanel>
+
                     <!-- Buttons -->
-                    <StackPanel Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2" 
+                    <StackPanel Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2" 
                                 Orientation="Horizontal" 
                                 HorizontalAlignment="Center"
                                 Margin="0,20,0,0">
@@ -181,10 +235,12 @@
                     Padding="12"
                     CornerRadius="4"
                     Margin="0,15,0,0">
-                <TextBlock Text="Preencha o ID e nome do rebanho, e informe os dados de mortes, nascimentos, entradas e saídas." 
+                <TextBlock Text="Preencha o ID e nome do rebanho, informe os dados de mortes, nascimentos, entradas, saídas, saldo inicial e saldo final." 
                            FontSize="12" 
                            Foreground="#1652AA"
                            TextWrapping="Wrap"/>
             </Border>
-    </StackPanel>
+            </StackPanel>
+        </Grid>
+    </Border>
 </UserControl>

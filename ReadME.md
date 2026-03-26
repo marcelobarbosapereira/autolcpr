@@ -109,6 +109,16 @@ Se o arquivo de configuracao nao existir na pasta de execucao, ele e criado auto
 - Relatorio financeiro por periodo e tipo (Receita/Despesa).
 - Saida em PDF com escolha de destino pelo usuario.
 
+## Atalhos de Teclado
+
+- `Tab`: navega entre campos e botoes da tela atual.
+- `Shift + Tab`: volta para o controle anterior no fluxo de foco.
+- `Setas (↑/↓)`: move a selecao entre linhas da tabela.
+- `Shift + Clique`: seleciona um intervalo continuo de linhas na tabela.
+- `Ctrl + Clique`: adiciona/remove linhas especificas da selecao na tabela.
+- `Enter` (com linha selecionada): abre edicao do item na grade do Dashboard.
+- `Duplo clique` na linha: abre edicao do item selecionado.
+
 ## Banco de Dados e Migrations
 
 As migrations estao em `src/AutoLCPR.Infrastructure/Migrations`.

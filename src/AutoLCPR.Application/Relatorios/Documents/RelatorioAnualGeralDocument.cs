@@ -126,14 +126,15 @@ internal sealed class RelatorioAnualGeralDocument : IDocument
         var totalReceitas = _modelo.TotalReceitas;
         var totalDespesas = _modelo.TotalDespesas;
         var margem = _modelo.MargemAnual;
+        var margemPositiva = margem > 0m;
 
         const float alturaMax = 314.6f;
         const decimal alturaMaxDecimal = 314.6m;
-        var maxValor = Math.Max(totalReceitas, Math.Max(totalDespesas, Math.Max(1m, margem)));
+        var maxValor = Math.Max(totalReceitas, Math.Max(totalDespesas, Math.Max(1m, margemPositiva ? margem : 0m)));
 
         var alturaReceita = (float)(alturaMaxDecimal * (totalReceitas / maxValor));
         var alturaDespesa = (float)(alturaMaxDecimal * (totalDespesas / maxValor));
-        var alturaMargem = (float)(alturaMaxDecimal * (margem / maxValor));
+        var alturaMargem = margemPositiva ? (float)(alturaMaxDecimal * (margem / maxValor)) : 0f;
 
         var corReceita = "#00B050";
         var corDespesa = "#FF0000";
@@ -189,14 +190,17 @@ internal sealed class RelatorioAnualGeralDocument : IDocument
                             c.Item().AlignCenter().Text(FormataNumero(totalDespesas)).FontSize(8);
                         });
 
-                        row.ConstantItem(102).Column(c =>
+                        if (margemPositiva)
                         {
-                            c.Item().Height(alturaMax - alturaMargem);
-                            c.Item().Height(alturaMargem).Background(corMargem);
-                            c.Item().PaddingTop(4).AlignCenter().Text("MARGEM").Bold().FontSize(10);
-                            c.Item().AlignCenter().Text("R$").FontSize(9);
-                            c.Item().AlignCenter().Text(FormataNumero(margem)).FontSize(8);
-                        });
+                            row.ConstantItem(102).Column(c =>
+                            {
+                                c.Item().Height(alturaMax - alturaMargem);
+                                c.Item().Height(alturaMargem).Background(corMargem);
+                                c.Item().PaddingTop(4).AlignCenter().Text("MARGEM").Bold().FontSize(10);
+                                c.Item().AlignCenter().Text("R$").FontSize(9);
+                                c.Item().AlignCenter().Text(FormataNumero(margem)).FontSize(8);
+                            });
+                        }
                     });
 
                     layers.Layer().TranslateY(560).Height(66).Row(row =>
@@ -217,12 +221,15 @@ internal sealed class RelatorioAnualGeralDocument : IDocument
                             c.Item().AlignCenter().PaddingVertical(4).Text($"R$               {FormataNumero(totalDespesas)}").FontSize(11);
                         });
 
-                        row.RelativeItem().Height(66).Border(1).BorderColor(Colors.Black).Column(c =>
+                        if (margemPositiva)
                         {
-                            c.Item().AlignCenter().PaddingVertical(4).Text("MARGEM").Bold().FontSize(16);
-                            c.Item().LineHorizontal(1).LineColor(Colors.Black);
-                            c.Item().AlignCenter().PaddingVertical(4).Text($"R$                 {FormataNumero(margem)}").FontSize(11);
-                        });
+                            row.RelativeItem().Height(66).Border(1).BorderColor(Colors.Black).Column(c =>
+                            {
+                                c.Item().AlignCenter().PaddingVertical(4).Text("MARGEM").Bold().FontSize(16);
+                                c.Item().LineHorizontal(1).LineColor(Colors.Black);
+                                c.Item().AlignCenter().PaddingVertical(4).Text($"R$                 {FormataNumero(margem)}").FontSize(11);
+                            });
+                        }
                     });
                 });
             });
@@ -304,13 +311,17 @@ internal sealed class RelatorioAnualGeralDocument : IDocument
                 x.TotalNascimentos,
                 x.TotalObitos,
                 x.TotalCompras,
-                x.TotalVendas))
+                x.TotalVendas,
+                x.SaldoInicial,
+                x.SaldoFinal))
             .ToList();
 
         var totalNascimentos = linhas.Sum(x => x.Nascimentos);
         var totalMortesConsumo = linhas.Sum(x => x.MortesConsumo);
         var totalEntradas = linhas.Sum(x => x.Entradas);
         var totalSaidas = linhas.Sum(x => x.Saidas);
+        var totalSaldoInicial = linhas.Sum(x => x.SaldoInicial);
+        var totalSaldoFinal = linhas.Sum(x => x.SaldoFinal);
 
         container.Page(page =>
         {
@@ -322,7 +333,7 @@ internal sealed class RelatorioAnualGeralDocument : IDocument
             {
                 col.Spacing(3);
                 col.Item().AlignCenter().Text(RelatorioPdfPadrao.SanitizarTexto(_modelo.NomeProdutor)).SemiBold().FontSize(13);
-                col.Item().AlignCenter().Text($"RELATORIO DE REBANHOS - ANO BASE {_modelo.AnoBase}").SemiBold().FontSize(12);
+                col.Item().AlignCenter().Text($"RELATORIO ANUAL DO PRODUTOR - ANO BASE {_modelo.AnoBase}").SemiBold().FontSize(12);
                 col.Item().LineHorizontal(1).LineColor(Colors.Black);
             }));
 
@@ -335,8 +346,10 @@ internal sealed class RelatorioAnualGeralDocument : IDocument
                     col.Item().ShowEntire().Border(1).BorderColor(Colors.Black).Padding(6).Column(bloco =>
                     {
                         bloco.Spacing(4);
-                        bloco.Item().Text($"Nome do Rebanho: {linha.Nome}").SemiBold();
-                        bloco.Item().Text($"Inscricao do Rebanho: {linha.Inscricao}").SemiBold();
+                        bloco.Item().Text($"Nome da Propriedade: {linha.Nome}").SemiBold();
+                        bloco.Item().Text($"Inscricao da Propriedade: {linha.Inscricao}").SemiBold();
+                        bloco.Item().Text($"Saldo Inicial: {FormataSaldo(linha.SaldoInicial)}").SemiBold();
+                        bloco.Item().Text($"Saldo Final: {FormataSaldo(linha.SaldoFinal)}").SemiBold();
 
                         bloco.Item().PaddingTop(2).Table(table =>
                         {
@@ -397,6 +410,12 @@ internal sealed class RelatorioAnualGeralDocument : IDocument
 
                         table.Cell().Element(TabelaRebanhoBody).Text("Saidas");
                         table.Cell().Element(TabelaRebanhoBody).AlignRight().Text(totalSaidas.ToString(PtBr));
+
+                        table.Cell().Element(TabelaRebanhoBody).Text("Saldo Inicial");
+                        table.Cell().Element(TabelaRebanhoBody).AlignRight().Text(FormataSaldo(totalSaldoInicial));
+
+                        table.Cell().Element(TabelaRebanhoBody).Text("Saldo Final");
+                        table.Cell().Element(TabelaRebanhoBody).AlignRight().Text(FormataSaldo(totalSaldoFinal));
                     });
                 });
             });
@@ -405,6 +424,11 @@ internal sealed class RelatorioAnualGeralDocument : IDocument
 
     private static string FormataNumero(decimal valor)
         => string.Format(PtBr, "{0:N2}", valor);
+
+    private static string FormataSaldo(decimal valor)
+        => valor % 1 == 0
+            ? string.Format(PtBr, "{0:N0}", valor)
+            : string.Format(PtBr, "{0:N2}", valor);
 
     private void ComporCabecalhoComImagem(IContainer container, Action<ColumnDescriptor> conteudoCabecalho)
     {
@@ -502,5 +526,5 @@ internal sealed class RelatorioAnualGeralDocument : IDocument
             .Padding(6);
 
     private sealed record NotaFiscalLinha(DateTime DataEmissao, string NomeOrigem, string Descricao, decimal Valor);
-    private sealed record ResumoRebanhoLinha(string Nome, string Inscricao, int Nascimentos, int MortesConsumo, int Entradas, int Saidas);
+    private sealed record ResumoRebanhoLinha(string Nome, string Inscricao, int Nascimentos, int MortesConsumo, int Entradas, int Saidas, decimal SaldoInicial, decimal SaldoFinal);
 }

@@ -62,6 +62,16 @@ internal sealed class RelatorioRebanhoDocument : IDocument
                         text.Span(RelatorioPdfPadrao.SanitizarTexto(propriedade.NomePropriedade));
                     });
                     bloco.Item().Text($"Inscrição: {RelatorioPdfPadrao.SanitizarTexto(propriedade.InscricaoPropriedade)}");
+                    bloco.Item().Text(text =>
+                    {
+                        text.Span("Saldo Inicial: ").SemiBold();
+                        text.Span(propriedade.SaldoInicial.ToString("C", PtBr));
+                    });
+                    bloco.Item().Text(text =>
+                    {
+                        text.Span("Saldo Final: ").SemiBold();
+                        text.Span(propriedade.SaldoFinal.ToString("C", PtBr));
+                    });
                     bloco.Item().Table(table =>
                     {
                         table.ColumnsDefinition(columns =>
@@ -91,6 +101,8 @@ internal sealed class RelatorioRebanhoDocument : IDocument
                 resumo.Item().Text($"Total de Compras: {_modelo.Resumo.TotalCompras}");
                 resumo.Item().Text($"Total de Vendas: {_modelo.Resumo.TotalVendas}");
                 resumo.Item().Text($"Total de Óbitos: {_modelo.Resumo.TotalObitos}");
+                resumo.Item().Text($"Saldo Inicial Total: {_modelo.Resumo.TotalSaldoInicial.ToString("C", PtBr)}").SemiBold();
+                resumo.Item().Text($"Saldo Final Total: {_modelo.Resumo.TotalSaldoFinal.ToString("C", PtBr)}").SemiBold();
                 resumo.Item().Text($"Saldo do Rebanho no Ano: {_modelo.Resumo.SaldoRebanhoAno}").SemiBold();
             });
         });
