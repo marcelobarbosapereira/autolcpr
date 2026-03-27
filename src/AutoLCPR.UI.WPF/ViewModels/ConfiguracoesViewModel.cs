@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel;
+using System.IO;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using AutoLCPR.Domain.Entities;
@@ -241,7 +242,26 @@ namespace AutoLCPR.UI.WPF.ViewModels
 
             if (dialog.ShowDialog() == true)
             {
-                ImagemCabecalho = dialog.FileName;
+                try
+                {
+                    var extensao = Path.GetExtension(dialog.FileName);
+                    var destino = Path.Combine(AppContext.BaseDirectory, $"cabecalho_relatorio{extensao}");
+
+                    // Remove imagem anterior com qualquer extensão
+                    foreach (var ext in new[] { ".png", ".jpg", ".jpeg", ".bmp", ".gif" })
+                    {
+                        var anterior = Path.Combine(AppContext.BaseDirectory, $"cabecalho_relatorio{ext}");
+                        if (File.Exists(anterior))
+                            File.Delete(anterior);
+                    }
+
+                    File.Copy(dialog.FileName, destino, overwrite: true);
+                    ImagemCabecalho = destino;
+                }
+                catch (Exception ex)
+                {
+                    AlertService.Show($"Erro ao importar imagem: {ex.Message}", "Erro", AlertType.Error);
+                }
             }
         }
 

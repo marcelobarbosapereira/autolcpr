@@ -42,7 +42,7 @@ internal sealed class RelatorioAnualGeralDocument : IDocument
         ComporFolhaRosto(container, "RELATORIO DE DESPESAS");
         ComporTabelaNotasFiscais(container, "NOTAS FISCAIS - DESPESAS", _despesas);
 
-        ComporFolhaRosto(container, "RELATORIO DE REBANHOS");
+        ComporFolhaRosto(container, "RELATORIO ANUAL DO PRODUTOR");
         ComporPaginasRebanhos(container);
     }
 
@@ -54,13 +54,39 @@ internal sealed class RelatorioAnualGeralDocument : IDocument
             page.Margin(36);
             page.DefaultTextStyle(style => style.FontFamily(Fonts.Arial).FontSize(12));
 
-            page.Content().AlignMiddle().Column(column =>
+            if (_imagemCabecalho is { Length: > 0 })
             {
-                column.Spacing(14);
-                column.Item().AlignCenter().Text(RelatorioPdfPadrao.SanitizarTexto(_modelo.NomeProdutor)).SemiBold().FontSize(20);
-                column.Item().AlignCenter().Text(tituloSecao).SemiBold().FontSize(32);
-                column.Item().AlignCenter().Text($"Ano Base: {_modelo.AnoBase}").FontSize(16);
-                column.Item().AlignCenter().Text($"Ano Declaracao: {_modelo.AnoExercicio}").FontSize(16);
+                page.Header().PaddingTop(20).Row(row =>
+                {
+                    row.RelativeItem();
+                    row.RelativeItem(8).Image(_imagemCabecalho).FitWidth();
+                    row.RelativeItem();
+                });
+            }
+
+            page.Content().Layers(layers =>
+            {
+                layers.PrimaryLayer().PaddingTop(_imagemCabecalho is { Length: > 0 } ? 10 : 0).Column(column =>
+                {
+                    column.Item().AlignCenter()
+                        .Text(RelatorioPdfPadrao.SanitizarTexto(_modelo.NomeProdutor))
+                        .SemiBold()
+                        .FontSize(24)
+                        .Bold();
+                });
+
+                layers.Layer().AlignMiddle().AlignCenter().Text(tituloSecao).SemiBold().FontSize(48);
+
+                layers.Layer()
+                    .AlignBottom()
+                    .PaddingLeft(50)
+                    .PaddingBottom(50)
+                    .Column(column =>
+                    {
+                        column.Spacing(4);
+                        column.Item().AlignLeft().Text($"BASE : {_modelo.AnoBase}").FontSize(12);
+                        column.Item().AlignLeft().Text($"EXEC.: {_modelo.AnoExercicio}").FontSize(12);
+                    });
             });
         });
     }
@@ -432,20 +458,7 @@ internal sealed class RelatorioAnualGeralDocument : IDocument
 
     private void ComporCabecalhoComImagem(IContainer container, Action<ColumnDescriptor> conteudoCabecalho)
     {
-        container.Layers(layers =>
-        {
-            layers.PrimaryLayer().Column(conteudoCabecalho);
-
-            if (_imagemCabecalho is { Length: > 0 })
-            {
-                layers.Layer()
-                    .AlignLeft()
-                    .TranslateY(2)
-                    .Height(26)
-                    .Image(_imagemCabecalho)
-                    .FitHeight();
-            }
-        });
+        container.Column(conteudoCabecalho);
     }
 
     private static IContainer CabecalhoTabela(IContainer c, bool isFirst = false, bool isLast = false)

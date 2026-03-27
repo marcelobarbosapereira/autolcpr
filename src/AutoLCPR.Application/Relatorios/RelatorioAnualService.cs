@@ -1,5 +1,6 @@
 using System.Globalization;
 using AutoLCPR.Application.Relatorios.Documents;
+using AutoLCPR.Application.Services;
 using AutoLCPR.Domain.Entities;
 using AutoLCPR.Domain.Repositories;
 using QuestPDF.Fluent;
@@ -15,20 +16,20 @@ public sealed class RelatorioAnualService : IRelatorioAnualService
     private readonly IMovimentacaoRebanhoRepository _movimentacaoRebanhoRepository;
     private readonly IRebanhoRepository _rebanhoRepository;
     private readonly IProdutorRepository _produtorRepository;
-    private readonly IConfiguracaoRepository _configuracaoRepository;
+    private readonly NfeConfigService _nfeConfigService;
 
     public RelatorioAnualService(
         ILancamentoRepository lancamentoRepository,
         IMovimentacaoRebanhoRepository movimentacaoRebanhoRepository,
         IRebanhoRepository rebanhoRepository,
         IProdutorRepository produtorRepository,
-        IConfiguracaoRepository configuracaoRepository)
+        NfeConfigService nfeConfigService)
     {
         _lancamentoRepository = lancamentoRepository;
         _movimentacaoRebanhoRepository = movimentacaoRebanhoRepository;
         _rebanhoRepository = rebanhoRepository;
         _produtorRepository = produtorRepository;
-        _configuracaoRepository = configuracaoRepository;
+        _nfeConfigService = nfeConfigService;
     }
 
     public byte[] GerarRelatorioAnual(int anoFiscal)
@@ -228,8 +229,8 @@ public sealed class RelatorioAnualService : IRelatorioAnualService
     {
         try
         {
-            var configuracao = await _configuracaoRepository.GetConfiguracaoAsync();
-            var caminhoImagem = configuracao?.ImagemCabecalhoRelatorios;
+            var configuracao = await _nfeConfigService.CarregarConfiguracaoAsync();
+            var caminhoImagem = configuracao?.ImagemCabecalho;
 
             if (string.IsNullOrWhiteSpace(caminhoImagem))
             {

@@ -118,14 +118,14 @@ namespace AutoLCPR.UI.WPF.ViewModels
 
             _tipoLancamentoFinanceiro = TipoLancamento.Receita;
             TiposLancamentoFinanceiro = new List<TipoLancamento> { TipoLancamento.Receita, TipoLancamento.Despesa };
-            GerarRelatorioCommand = new RelayCommand(GerarRelatorioAnualPdf);
-            GerarRelatorioRebanhoCommand = new RelayCommand(GerarRelatorioRebanhoPdf);
-            GerarRelatorioFinanceiroCommand = new RelayCommand(GerarRelatorioFinanceiroPdf);
+            GerarRelatorioCommand = new AsyncRelayCommand(GerarRelatorioAnualPdf);
+            GerarRelatorioRebanhoCommand = new AsyncRelayCommand(GerarRelatorioRebanhoPdf);
+            GerarRelatorioFinanceiroCommand = new AsyncRelayCommand(GerarRelatorioFinanceiroPdf);
         }
 
-        private void GerarRelatorioAnualPdf()
+        private Task GerarRelatorioAnualPdf()
         {
-            GerarPdf(
+            return GerarPdfAsync(
                 "Gerando relatório anual em PDF...",
                 "Salvar Relatório Consolidado Anual",
                 $"LivroCaixa_{AnoFiscal}_{AnoFiscal + 1}.pdf",
@@ -133,9 +133,9 @@ namespace AutoLCPR.UI.WPF.ViewModels
                 "Erro ao gerar o relatório anual.");
         }
 
-        private void GerarRelatorioRebanhoPdf()
+        private Task GerarRelatorioRebanhoPdf()
         {
-            GerarPdf(
+            return GerarPdfAsync(
                 "Gerando relatório de movimentação de rebanho em PDF...",
                 "Salvar Relatório de Movimentação de Rebanho",
                 $"Rebanho_{AnoFiscal}_{AnoFiscal + 1}.pdf",
@@ -143,15 +143,15 @@ namespace AutoLCPR.UI.WPF.ViewModels
                 "Erro ao gerar o relatório de rebanho.");
         }
 
-        private void GerarRelatorioFinanceiroPdf()
+        private Task GerarRelatorioFinanceiroPdf()
         {
             if (DataInicial.Date > DataFinal.Date)
             {
                 AlertService.Show("A data inicial não pode ser maior que a data final.", "Validação", AlertType.Warning);
-                return;
+                return Task.CompletedTask;
             }
 
-            GerarPdf(
+            return GerarPdfAsync(
                 "Gerando relatório financeiro por período em PDF...",
                 "Salvar Relatório Financeiro por Período",
                 $"{TipoLancamentoFinanceiro}_{DataInicial:yyyyMMdd}_{DataFinal:yyyyMMdd}.pdf",
@@ -161,7 +161,7 @@ namespace AutoLCPR.UI.WPF.ViewModels
                 "Erro ao gerar o relatório financeiro por período.");
         }
 
-        private void GerarPdf(string statusProcessando, string tituloSalvar, string nomeArquivo, Func<IServiceProvider, byte[]> gerarPdf, string statusErro)
+        private async Task GerarPdfAsync(string statusProcessando, string tituloSalvar, string nomeArquivo, Func<IServiceProvider, byte[]> gerarPdf, string statusErro)
         {
             if (_serviceProvider == null)
             {
@@ -179,8 +179,11 @@ namespace AutoLCPR.UI.WPF.ViewModels
             {
                 Status = statusProcessando;
 
-                using var scope = _serviceProvider.CreateScope();
-                var pdfBytes = gerarPdf(scope.ServiceProvider);
+                var pdfBytes = await Task.Run(() =>
+                {
+                    using var scope = _serviceProvider.CreateScope();
+                    return gerarPdf(scope.ServiceProvider);
+                });
 
                 if (pdfBytes.Length == 0)
                 {
@@ -199,7 +202,7 @@ namespace AutoLCPR.UI.WPF.ViewModels
 
                 if (fileDialog.ShowDialog() == true)
                 {
-                    File.WriteAllBytes(fileDialog.FileName, pdfBytes);
+                    await File.WriteAllBytesAsync(fileDialog.FileName, pdfBytes);
                     AlertService.Show("Relatório gerado com sucesso!", "Sucesso", AlertType.Success);
                     Status = $"Relatório salvo em: {fileDialog.FileName}";
                 }
