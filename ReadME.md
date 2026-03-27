@@ -100,12 +100,12 @@ Se o arquivo de configuracao nao existir na pasta de execucao, ele e criado auto
 - Tela `Importar` usa WebView2 para navegacao.
 - Captura chaves de acesso e detalhes da consulta.
 - Salva HTML por produtor (`{pastaHtml}/{cpf}/`).
-- Importa e converte para lancamentos/notas no banco.
+- Importa e converte para lancamentos/notas no banco de forma inteligente já separando receitas e despesas.
 
 ### Relatorios
 
-- Relatorio anual consolidado.
-- Relatorio de movimentacao de rebanho.
+- Relatorio anual (Livro Caixa).
+- Relatorio de movimentacao de rebanhos.
 - Relatorio financeiro por periodo e tipo (Receita/Despesa).
 - Saida em PDF com escolha de destino pelo usuario.
 

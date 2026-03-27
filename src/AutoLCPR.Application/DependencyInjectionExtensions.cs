@@ -13,6 +13,7 @@ public static class DependencyInjectionExtensions
         services.AddScoped<IRelatorioFinanceiroService, RelatorioFinanceiroService>();
         services.AddSingleton<NfeConfigService>();
         services.AddScoped<NfeImportService>();
+        services.AddScoped<IExtratoRebanhoPdfParserService, ExtratoRebanhoPdfParserService>();
         return services;
     }
 }

@@ -2,23 +2,80 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
+             xmlns:local="clr-namespace:AutoLCPR.UI.WPF.Converters"
              Background="#F8F9FA">
-    <ScrollViewer>
-        <StackPanel Margin="20" VerticalAlignment="Center" HorizontalAlignment="Center" Width="1200">
-            <Border Background="White" BorderBrush="#E8EAED" BorderThickness="0,0,0,1" Padding="20,15" Margin="0,0,0,16" Width="1200">
-                <TextBlock Text="Consultar NF-es SEFAZ-MS"
-                           FontSize="24"
-                           FontWeight="SemiBold"
-                           Foreground="#202124"
-                           TextAlignment="Center"/>
-            </Border>
+    <UserControl.Resources>
+        <local:FiltroToColorConverter x:Key="FiltroToColorConverter"/>
+        <local:FiltroToLineColorConverter x:Key="FiltroToLineColorConverter"/>
+        <local:FiltroToVisibilityConverter x:Key="FiltroToVisibilityConverter"/>
+    </UserControl.Resources>
+    
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
 
-            <Border Background="White"
-                    BorderBrush="#E8EAED"
-                    BorderThickness="1"
-                    Padding="16"
-                    CornerRadius="8"
-                    Width="1200">
+        <!-- Header -->
+        <Border Background="White" BorderBrush="#E8EAED" BorderThickness="0,0,0,1" Padding="20,15">
+            <TextBlock Text="Importações"
+                       FontSize="24"
+                       FontWeight="SemiBold"
+                       Foreground="#202124"
+                       TextAlignment="Center"/>
+        </Border>
+
+        <!-- Main Content with Tabs -->
+        <Border Grid.Row="1" Background="White" BorderBrush="#E8EAED" BorderThickness="0,1,0,0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- Tabs Row -->
+                <Border BorderBrush="#E8EAED" BorderThickness="0,0,0,1">
+                    <StackPanel Orientation="Horizontal" Background="White">
+                        <Button Command="{Binding SelecionarNotasFiscaisCommand}" 
+                                Background="Transparent" 
+                                Foreground="{Binding SecaoSelecionada, Converter={StaticResource FiltroToColorConverter}, ConverterParameter=NotasFiscais}"
+                                Padding="15,8,15,8" 
+                                HorizontalAlignment="Left" 
+                                VerticalAlignment="Center" 
+                                Cursor="Hand" 
+                                BorderThickness="0" 
+                                FontWeight="SemiBold" 
+                                FontSize="12" 
+                                Margin="0,0,20,0">
+                            <TextBlock><Run Text="📄"/><Run Text=" Notas Fiscais"/></TextBlock>
+                        </Button>
+                        <Button Command="{Binding SelecionarExtratosCommand}" 
+                                Background="Transparent"
+                                Foreground="{Binding SecaoSelecionada, Converter={StaticResource FiltroToColorConverter}, ConverterParameter=Extratos}"
+                                Padding="15,8,15,8" 
+                                HorizontalAlignment="Left" 
+                                VerticalAlignment="Center"
+                                Cursor="Hand" 
+                                BorderThickness="0" 
+                                FontWeight="SemiBold" 
+                                FontSize="12" 
+                                Margin="0">
+                            <TextBlock><Run Text="📋"/><Run Text=" Extratos"/></TextBlock>
+                        </Button>
+                    </StackPanel>
+                </Border>
+
+                <!-- Conteúdo das Abas -->
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="20" Width="1200">
+
+                        <!-- Aba: Notas Fiscais -->
+                        <Grid Visibility="{Binding SecaoSelecionada, Converter={StaticResource FiltroToVisibilityConverter}, ConverterParameter=NotasFiscais}">
+                            <Border Background="White"
+                                    BorderBrush="#E8EAED"
+                                    BorderThickness="1"
+                                    Padding="16"
+                                    CornerRadius="8">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="360"/>
@@ -101,6 +158,87 @@
                     </Border>
                 </Grid>
             </Border>
-        </StackPanel>
-    </ScrollViewer>
+                        </Grid>
+
+                        <!-- Aba: Extratos -->
+                        <Grid Visibility="{Binding SecaoSelecionada, Converter={StaticResource FiltroToVisibilityConverter}, ConverterParameter=Extratos}">
+                            <Border Background="White"
+                                    BorderBrush="#E8EAED"
+                                    BorderThickness="1"
+                                    Padding="20"
+                                    CornerRadius="8">
+                <StackPanel>
+                    <TextBlock Text="Importar extrato do produtor"
+                               FontSize="22"
+                               FontWeight="SemiBold"
+                               Foreground="#202124"
+                               Margin="0,0,0,8"/>
+
+                    <TextBlock Text="Esta seção é independente da importação de NF-es. O produtor utiliza apenas arquivos PDF de extrato."
+                               Foreground="#5F6368"
+                               TextWrapping="Wrap"
+                               Margin="0,0,0,14"/>
+
+                    <TextBlock Text="A leitura automática do PDF será implementada para registrar: nome da propriedade, inscrição, saldo inicial, nascimentos, mortes/consumos, entradas, saídas e saldo final."
+                               Foreground="#5F6368"
+                               TextWrapping="Wrap"
+                               Margin="0,0,0,14"/>
+
+                    <Grid Margin="0,0,0,14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="12"/>
+                            <ColumnDefinition Width="220"/>
+                            <ColumnDefinition Width="12"/>
+                            <ColumnDefinition Width="260"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBox Grid.Column="0"
+                                 Text="{Binding ArquivoExtratoSelecionado, Mode=OneWay}"
+                                 Height="36"
+                                 VerticalContentAlignment="Center"
+                                 IsReadOnly="True"/>
+
+                        <Button Grid.Column="2"
+                            Content="Selecionar arquivo PDF"
+                                Command="{Binding SelecionarArquivoExtratoCommand}"
+                                Height="36"
+                                FontWeight="SemiBold"/>
+
+                        <Button Grid.Column="4"
+                                Content="Importar extrato do produtor"
+                                Command="{Binding ImportarExtratoCommand}"
+                                Height="36"
+                                FontWeight="SemiBold"/>
+                    </Grid>
+
+                    <TextBlock Text="{Binding ExtratoStatus}"
+                               Foreground="#5F6368"
+                               TextWrapping="Wrap"
+                               Margin="0,0,0,10"/>
+
+                    <TextBlock Text="Campos previstos para leitura do extrato"
+                               FontWeight="SemiBold"
+                               Margin="0,0,0,8"
+                               Foreground="#202124"/>
+
+                    <ListBox ItemsSource="{Binding CamposExtratoRebanhoEsperados}"
+                             Height="150"
+                             Margin="0,0,0,10"/>
+
+                    <TextBlock Text="Status da preparação"
+                               FontWeight="SemiBold"
+                               Margin="0,0,0,8"
+                               Foreground="#202124"/>
+
+                    <ListBox ItemsSource="{Binding LancamentosExtratoImportados}"
+                             Height="220"/>
+                </StackPanel>
+            </Border>
+                        </Grid>
+                    </StackPanel>
+                </ScrollViewer>
+            </Grid>
+        </Border>
+    </Grid>
 </UserControl>
