@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Data;
 using AutoLCPR.Domain.Entities;
 using AutoLCPR.Domain.Repositories;
 using AutoLCPR.UI.WPF.Services;
@@ -28,9 +29,13 @@ namespace AutoLCPR.UI.WPF.ViewModels
         private decimal _despesasMes = 0m;
         private string _filtroSelecionado = "Despesas";
         private string _textoNovoButton = "+ Nova Despesa";
+        private string _textoBusca = string.Empty;
         private Produtor? _produtorSelecionado;
         private Rebanho? _rebanhoSelecionado;
         private NotaFiscal? _notaFiscalSelecionada;
+        private readonly ICollectionView _despesasView;
+        private readonly ICollectionView _receitasView;
+        private readonly ICollectionView _rebanhosView;
 
         public ObservableCollection<Produtor> Produtores { get; } = new();
         public ObservableCollection<NotaFiscal> Despesas { get; } = new();
@@ -132,6 +137,20 @@ namespace AutoLCPR.UI.WPF.ViewModels
             }
         }
 
+        public string TextoBusca
+        {
+            get => _textoBusca;
+            set
+            {
+                if (_textoBusca != value)
+                {
+                    _textoBusca = value;
+                    OnPropertyChanged(nameof(TextoBusca));
+                    AtualizarFiltrosBusca();
+                }
+            }
+        }
+
         public ICommand SelecionarReceitasCommand { get; }
         public ICommand SelecionarDespesasCommand { get; }
         public ICommand SelecionarRebanhoCommand { get; }
@@ -211,6 +230,14 @@ namespace AutoLCPR.UI.WPF.ViewModels
             _serviceProvider = (System.Windows.Application.Current as App)?.ServiceProvider;
             _importacaoContextoService = _serviceProvider?.GetService<ImportacaoContextoService>();
 
+            _despesasView = CollectionViewSource.GetDefaultView(Despesas);
+            _receitasView = CollectionViewSource.GetDefaultView(Receitas);
+            _rebanhosView = CollectionViewSource.GetDefaultView(Rebanhos);
+
+            _despesasView.Filter = FiltrarDespesa;
+            _receitasView.Filter = FiltrarReceita;
+            _rebanhosView.Filter = FiltrarRebanho;
+
             // Inicializar comandos
             SelecionarReceitasCommand = new RelayCommand(() => FiltroSelecionado = "Receitas");
             SelecionarDespesasCommand = new RelayCommand(() => FiltroSelecionado = "Despesas");
@@ -228,6 +255,75 @@ namespace AutoLCPR.UI.WPF.ViewModels
             // Carregar dados
             ResetDashboard();
             _ = LoadProdutoresAsync();
+        }
+
+        private bool BuscaAtiva => !string.IsNullOrWhiteSpace(_textoBusca) && _textoBusca.Trim().Length >= 3;
+
+        private void AtualizarFiltrosBusca()
+        {
+            _despesasView.Refresh();
+            _receitasView.Refresh();
+            _rebanhosView.Refresh();
+        }
+
+        private bool FiltrarDespesa(object item)
+        {
+            if (item is not NotaFiscal despesa)
+            {
+                return false;
+            }
+
+            return !BuscaAtiva || NotaCorrespondeBusca(despesa);
+        }
+
+        private bool FiltrarReceita(object item)
+        {
+            if (item is not NotaFiscal receita)
+            {
+                return false;
+            }
+
+            return !BuscaAtiva || NotaCorrespondeBusca(receita);
+        }
+
+        private bool FiltrarRebanho(object item)
+        {
+            if (item is not Rebanho rebanho)
+            {
+                return false;
+            }
+
+            if (!BuscaAtiva)
+            {
+                return true;
+            }
+
+            var termo = _textoBusca.Trim();
+
+            return ContemTermo(rebanho.IdRebanho, termo)
+                || ContemTermo(rebanho.NomeRebanho, termo)
+                || ContemTermo(rebanho.Nascimentos.ToString(), termo)
+                || ContemTermo(rebanho.Entradas.ToString(), termo)
+                || ContemTermo(rebanho.Saidas.ToString(), termo)
+                || ContemTermo(rebanho.Mortes.ToString(), termo);
+        }
+
+        private bool NotaCorrespondeBusca(NotaFiscal nota)
+        {
+            var termo = _textoBusca.Trim();
+
+            return ContemTermo(nota.NumeroDaNota, termo)
+                || ContemTermo(nota.Origem, termo)
+                || ContemTermo(nota.Destino, termo)
+                || ContemTermo(nota.Descricao, termo)
+                || ContemTermo(nota.DataEmissao.ToString("dd/MM/yyyy"), termo)
+                || ContemTermo(nota.ValorNotaFiscal.ToString("N2"), termo);
+        }
+
+        private static bool ContemTermo(string? texto, string termo)
+        {
+            return !string.IsNullOrWhiteSpace(texto)
+                && texto.Contains(termo, StringComparison.OrdinalIgnoreCase);
         }
 
         /// <summary>
@@ -772,6 +868,8 @@ namespace AutoLCPR.UI.WPF.ViewModels
                 {
                     Rebanhos.Add(rebanho);
                 }
+
+                AtualizarFiltrosBusca();
 
                 var now = DateTime.Now;
                 var receitasMes = receitas

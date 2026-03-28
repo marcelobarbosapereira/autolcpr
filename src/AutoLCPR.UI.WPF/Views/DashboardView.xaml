@@ -163,7 +163,9 @@
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Text="🔍" FontSize="12" Foreground="#9AA0A6"
                                            VerticalAlignment="Center" Margin="2,0,6,0"/>
-                                <TextBox Grid.Column="1" Style="{StaticResource SearchTextBoxStyle}"/>
+                                <TextBox Grid.Column="1"
+                                         Style="{StaticResource SearchTextBoxStyle}"
+                                         Text="{Binding TextoBusca, UpdateSourceTrigger=PropertyChanged}"/>
                             </Grid>
                         </Border>
                     </StackPanel>
