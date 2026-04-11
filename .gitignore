@@ -49,6 +49,7 @@ Thumbs.db
 # Build artifacts
 artifacts/
 publish/
+dist/
 
 # Certificates
 *.pfx
