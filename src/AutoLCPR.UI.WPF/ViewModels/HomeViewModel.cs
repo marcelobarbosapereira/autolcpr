@@ -244,9 +244,9 @@ namespace AutoLCPR.UI.WPF.ViewModels
             SelecionarRebanhoCommand = new RelayCommand(() => FiltroSelecionado = "Rebanho");
             AdicionarProdutorCommand = new RelayCommand(AdicionarProdutor);
             EditarProdutorCommand = new RelayCommand(EditarProdutor);
-            ExcluirProdutorCommand = new RelayCommand(ExcluirProdutor);
+            ExcluirProdutorCommand = new AsyncRelayCommand(ExcluirProdutor);
             NovoItemCommand = new RelayCommand(AbrirNovoItem);
-            ExcluirItemCommand = new RelayCommand(ExcluirItem);
+            ExcluirItemCommand = new AsyncRelayCommand(ExcluirItem);
             SelecionarRebanhoItemCommand = new ParameterizedRelayCommand(SelecionarRebanhoItem);
             EditarRebanhoCommand = new ParameterizedRelayCommand(EditarRebanho);
             SelecionarNotaFiscalCommand = new ParameterizedRelayCommand(SelecionarNotaFiscal);
@@ -459,7 +459,7 @@ namespace AutoLCPR.UI.WPF.ViewModels
         /// <summary>
         /// Abre o diálogo para excluir um produtor selecionado
         /// </summary>
-        private async void ExcluirProdutor()
+        private async Task ExcluirProdutor()
         {
             if (ProdutorSelecionado == null)
             {
@@ -480,7 +480,16 @@ namespace AutoLCPR.UI.WPF.ViewModels
                 {
                     using var scope = _serviceProvider.CreateScope();
                     var repo = scope.ServiceProvider.GetRequiredService<IProdutorRepository>();
-                    await repo.DeleteAsync(ProdutorSelecionado.Id);
+                    var produtorId = ProdutorSelecionado.Id;
+                    await repo.DeleteAsync(produtorId);
+
+                    var produtorPersistiu = await repo.GetByIdAsync(produtorId);
+                    if (produtorPersistiu != null)
+                    {
+                        AlertService.Show("A exclusão do produtor não foi persistida no banco de dados.", "Erro", AlertType.Error);
+                        return;
+                    }
+
                     AlertService.Show("Produtor excluido com sucesso!", "Sucesso", AlertType.Success);
                     await LoadProdutoresAsync();
                 }
@@ -584,18 +593,18 @@ namespace AutoLCPR.UI.WPF.ViewModels
         /// <summary>
         /// Exclui o item selecionado baseado no filtro ativo
         /// </summary>
-        private void ExcluirItem()
+        private async Task ExcluirItem()
         {
             switch (FiltroSelecionado)
             {
                 case "Despesas":
-                    ExcluirDespesa();
+                    await ExcluirDespesa();
                     break;
                 case "Receitas":
-                    ExcluirReceita();
+                    await ExcluirReceita();
                     break;
                 case "Rebanho":
-                    ExcluirRebanho();
+                    await ExcluirRebanho();
                     break;
                 default:
                     AlertService.Show("Selecione um tipo valido antes de continuar.", "Atencao", AlertType.Warning);
@@ -606,7 +615,7 @@ namespace AutoLCPR.UI.WPF.ViewModels
         /// <summary>
         /// Exclui a despesa (nota fiscal de entrada) selecionada
         /// </summary>
-        private async void ExcluirDespesa()
+        private async Task ExcluirDespesa()
         {
             var notasParaExcluir = ObterNotasSelecionadas();
 
@@ -639,9 +648,25 @@ namespace AutoLCPR.UI.WPF.ViewModels
                 {
                     using var scope = _serviceProvider.CreateScope();
                     var repo = scope.ServiceProvider.GetRequiredService<INotaFiscalRepository>();
+                    var idsExcluidos = notasParaExcluir.Select(item => item.Id).ToList();
                     foreach (var nota in notasParaExcluir)
                     {
                         await repo.DeleteAsync(nota.Id);
+                    }
+
+                    var idsPersistentes = new List<int>();
+                    foreach (var id in idsExcluidos)
+                    {
+                        if (await repo.GetByIdAsync(id) != null)
+                        {
+                            idsPersistentes.Add(id);
+                        }
+                    }
+
+                    if (idsPersistentes.Count > 0)
+                    {
+                        AlertService.Show("Uma ou mais despesas não foram excluídas do banco de dados.", "Erro", AlertType.Error);
+                        return;
                     }
 
                     var mensagem = notasParaExcluir.Count == 1
@@ -663,7 +688,7 @@ namespace AutoLCPR.UI.WPF.ViewModels
         /// <summary>
         /// Exclui a receita (nota fiscal de saida) selecionada
         /// </summary>
-        private async void ExcluirReceita()
+        private async Task ExcluirReceita()
         {
             var notasParaExcluir = ObterNotasSelecionadas();
 
@@ -696,9 +721,25 @@ namespace AutoLCPR.UI.WPF.ViewModels
                 {
                     using var scope = _serviceProvider.CreateScope();
                     var repo = scope.ServiceProvider.GetRequiredService<INotaFiscalRepository>();
+                    var idsExcluidos = notasParaExcluir.Select(item => item.Id).ToList();
                     foreach (var nota in notasParaExcluir)
                     {
                         await repo.DeleteAsync(nota.Id);
+                    }
+
+                    var idsPersistentes = new List<int>();
+                    foreach (var id in idsExcluidos)
+                    {
+                        if (await repo.GetByIdAsync(id) != null)
+                        {
+                            idsPersistentes.Add(id);
+                        }
+                    }
+
+                    if (idsPersistentes.Count > 0)
+                    {
+                        AlertService.Show("Uma ou mais receitas não foram excluídas do banco de dados.", "Erro", AlertType.Error);
+                        return;
                     }
 
                     var mensagem = notasParaExcluir.Count == 1
@@ -720,7 +761,7 @@ namespace AutoLCPR.UI.WPF.ViewModels
         /// <summary>
         /// Exclui o rebanho selecionado
         /// </summary>
-        private async void ExcluirRebanho()
+        private async Task ExcluirRebanho()
         {
             if (RebanhoSelecionado == null)
             {
@@ -747,7 +788,16 @@ namespace AutoLCPR.UI.WPF.ViewModels
                 {
                     using var scope = _serviceProvider.CreateScope();
                     var repo = scope.ServiceProvider.GetRequiredService<IRebanhoRepository>();
-                    await repo.DeleteAsync(RebanhoSelecionado.Id);
+                    var rebanhoId = RebanhoSelecionado.Id;
+                    await repo.DeleteAsync(rebanhoId);
+
+                    var rebanhoPersistiu = await repo.GetByIdAsync(rebanhoId);
+                    if (rebanhoPersistiu != null)
+                    {
+                        AlertService.Show("A exclusão da propriedade não foi persistida no banco de dados.", "Erro", AlertType.Error);
+                        return;
+                    }
+
                     AlertService.Show($"Propriedade '{RebanhoSelecionado.NomeRebanho}' excluida com sucesso!", "Sucesso", AlertType.Success);
                     RebanhoSelecionado = null;
                     await LoadDadosProdutorAsync();

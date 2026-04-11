@@ -9,30 +9,44 @@ public sealed class RelatorioFinanceiroService : IRelatorioFinanceiroService
 {
     private static readonly System.Globalization.CultureInfo PtBr = new("pt-BR");
 
-    private readonly ILancamentoRepository _lancamentoRepository;
+    private readonly INotaFiscalRepository _notaFiscalRepository;
     private readonly IProdutorRepository _produtorRepository;
 
-    public RelatorioFinanceiroService(ILancamentoRepository lancamentoRepository, IProdutorRepository produtorRepository)
+    public RelatorioFinanceiroService(INotaFiscalRepository notaFiscalRepository, IProdutorRepository produtorRepository)
     {
-        _lancamentoRepository = lancamentoRepository;
+        _notaFiscalRepository = notaFiscalRepository;
         _produtorRepository = produtorRepository;
     }
 
-    public byte[] GerarRelatorioFinanceiro(DateTime dataInicial, DateTime dataFinal, TipoLancamento tipo)
+    public byte[] GerarRelatorioFinanceiro(DateTime dataInicial, DateTime dataFinal, TipoLancamento tipo, int? produtorId = null)
     {
-        return GerarRelatorioFinanceiroAsync(dataInicial, dataFinal, tipo, CancellationToken.None).GetAwaiter().GetResult();
+        return GerarRelatorioFinanceiroAsync(dataInicial, dataFinal, tipo, produtorId, CancellationToken.None).GetAwaiter().GetResult();
     }
 
-    private async Task<byte[]> GerarRelatorioFinanceiroAsync(DateTime dataInicial, DateTime dataFinal, TipoLancamento tipo, CancellationToken cancellationToken)
+    private async Task<byte[]> GerarRelatorioFinanceiroAsync(DateTime dataInicial, DateTime dataFinal, TipoLancamento tipo, int? produtorId, CancellationToken cancellationToken)
     {
         var inicio = dataInicial.Date;
         var fim = dataFinal.Date.AddDays(1).AddTicks(-1);
 
-        var produtor = (await _produtorRepository.GetAllAsync())
+        Produtor? produtor = null;
+        if (produtorId.HasValue)
+        {
+            produtor = await _produtorRepository.GetByIdAsync(produtorId.Value);
+        }
+
+        produtor ??= (await _produtorRepository.GetAllAsync())
             .OrderBy(item => item.Nome)
             .FirstOrDefault();
 
-        var total = await CalcularTotalAsync(inicio, fim, tipo, produtor?.Id, cancellationToken);
+        var tipoNota = tipo == TipoLancamento.Receita ? TipoNota.Saida : TipoNota.Entrada;
+        var notas = produtor?.Id is int produtorSelecionadoId
+            ? (await _notaFiscalRepository.GetByProdutorIdAsync(produtorSelecionadoId))
+                .Where(item => item.TipoNota == tipoNota && item.DataEmissao >= inicio && item.DataEmissao <= fim)
+                .OrderByDescending(item => item.DataEmissao)
+                .ToList()
+            : new List<NotaFiscal>();
+
+        var total = notas.Sum(item => item.ValorNotaFiscal);
 
         var modelo = new RelatorioFinanceiroDto
         {
@@ -44,19 +58,20 @@ public sealed class RelatorioFinanceiroService : IRelatorioFinanceiroService
             Total = total
         };
 
-        var lancamentos = new List<Lancamento>();
-        await foreach (var item in _lancamentoRepository.StreamFinanceiroAsync(inicio, fim, tipo, produtor?.Id, null, cancellationToken))
+        var lancamentos = notas.Select(item => new Lancamento
         {
-            lancamentos.Add(item);
-        }
+            Data = item.DataEmissao,
+            Tipo = tipo,
+            ClienteFornecedor = item.Destino,
+            Descricao = item.Descricao,
+            Situacao = "Concluído",
+            Valor = item.ValorNotaFiscal,
+            Vencimento = item.DataEmissao,
+            ProdutorId = item.ProdutorId
+        }).ToList();
 
         var document = new RelatorioFinanceiroDocument(modelo, lancamentos);
         return document.GeneratePdf();
-    }
-
-    private async Task<decimal> CalcularTotalAsync(DateTime dataInicial, DateTime dataFinal, TipoLancamento tipo, int? produtorId, CancellationToken cancellationToken)
-    {
-        return await _lancamentoRepository.ObterTotalFinanceiroAsync(dataInicial, dataFinal, tipo, produtorId, null, cancellationToken);
     }
 
     private static string FormatarMoeda(decimal valor)

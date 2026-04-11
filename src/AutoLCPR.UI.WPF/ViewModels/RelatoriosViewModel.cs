@@ -151,13 +151,15 @@ namespace AutoLCPR.UI.WPF.ViewModels
                 return Task.CompletedTask;
             }
 
+            var produtorSelecionadoId = _importacaoContextoService?.ProdutorSelecionadoId;
+
             return GerarPdfAsync(
                 "Gerando relatório financeiro por período em PDF...",
                 "Salvar Relatório Financeiro por Período",
                 $"{TipoLancamentoFinanceiro}_{DataInicial:yyyyMMdd}_{DataFinal:yyyyMMdd}.pdf",
                 serviceProvider => serviceProvider
                     .GetRequiredService<IRelatorioFinanceiroService>()
-                    .GerarRelatorioFinanceiro(DataInicial.Date, DataFinal.Date, TipoLancamentoFinanceiro),
+                    .GerarRelatorioFinanceiro(DataInicial.Date, DataFinal.Date, TipoLancamentoFinanceiro, produtorSelecionadoId),
                 "Erro ao gerar o relatório financeiro por período.");
         }
 
