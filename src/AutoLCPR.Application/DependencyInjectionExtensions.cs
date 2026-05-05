@@ -14,6 +14,7 @@ public static class DependencyInjectionExtensions
         services.AddSingleton<NfeConfigService>();
         services.AddScoped<NfeImportService>();
         services.AddScoped<IExtratoRebanhoPdfParserService, ExtratoRebanhoPdfParserService>();
+        services.AddScoped<IFolhaPagamentoPdfParserService, FolhaPagamentoPdfParserService>();
         return services;
     }
 }

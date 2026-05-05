@@ -35,11 +35,16 @@ namespace AutoLCPR.UI.WPF.ViewModels
         private DateTime _dataInicio;
         private DateTime _dataFim;
         private string _arquivoExtratoSelecionado = string.Empty;
-        private string _extratoStatus = "Selecione um arquivo PDF de extrato para preparar a importação.";
+        private List<string> _arquivosExtratoSelecionados = new();
+        private string _extratoStatus = "Selecione um ou mais arquivos PDF de extrato para preparar a importação.";
         private string _secaoSelecionada = "NotasFiscais";
+        private List<string> _arquivosRhSelecionados = new();
+        private string _rhStatus = "Selecione um ou mais PDFs de folha de pagamento para importar.";
 
         public ObservableCollection<string> ChavesImportadas { get; } = new();
         public ObservableCollection<string> LancamentosExtratoImportados { get; } = new();
+        public ObservableCollection<string> ArquivosRhDisplay { get; } = new();
+        public ObservableCollection<string> ItensRhImportados { get; } = new();
         public ObservableCollection<string> CamposExtratoRebanhoEsperados { get; } = new()
         {
             "Nome da propriedade",
@@ -59,6 +64,9 @@ namespace AutoLCPR.UI.WPF.ViewModels
         public ICommand ImportarExtratoCommand { get; }
         public ICommand SelecionarNotasFiscaisCommand { get; }
         public ICommand SelecionarExtratosCommand { get; }
+        public ICommand SelecionarArquivosRhCommand { get; }
+        public ICommand ImportarFolhaCommand { get; }
+        public ICommand SelecionarRecursosHumanosCommand { get; }
 
         public DateTime DataInicio
         {
@@ -275,9 +283,12 @@ namespace AutoLCPR.UI.WPF.ViewModels
             ExecutarImportacaoCommand = new RelayCommand(() => _ = ExecutarImportacao(), () => !IsImportando);
             ImportarNotasCommand = new RelayCommand(() => _ = ImportarNotas(), () => !IsImportando);
             SelecionarArquivoExtratoCommand = new RelayCommand(SelecionarArquivoExtrato, () => !IsImportando);
-            ImportarExtratoCommand = new RelayCommand(() => _ = ImportarExtrato(), () => !IsImportando && !string.IsNullOrWhiteSpace(ArquivoExtratoSelecionado));
+            ImportarExtratoCommand = new RelayCommand(() => _ = ImportarExtrato(), () => !IsImportando && _arquivosExtratoSelecionados.Count > 0);
             SelecionarNotasFiscaisCommand = new RelayCommand(() => SecaoSelecionada = "NotasFiscais", () => !IsImportando);
-            SelecionarExtratosCommand = new RelayCommand(() => SecaoSelecionada = "Extratos", () => !IsImportando);
+            SelecionarExtratosCommand = new RelayCommand(() => SecaoSelecionada = "AtividadeRural", () => !IsImportando);
+            SelecionarArquivosRhCommand = new RelayCommand(SelecionarArquivosRh, () => !IsImportando);
+            ImportarFolhaCommand = new RelayCommand(() => _ = ImportarFolha(), () => !IsImportando && _arquivosRhSelecionados.Count > 0);
+            SelecionarRecursosHumanosCommand = new RelayCommand(() => SecaoSelecionada = "RecursosHumanos", () => !IsImportando);
         }
 
         public async Task ExecutarImportacao()
@@ -792,15 +803,31 @@ namespace AutoLCPR.UI.WPF.ViewModels
         {
             var dialog = new OpenFileDialog
             {
-                Title = "Selecionar extrato do produtor",
+                Title = "Selecionar extrato(s) do produtor",
                 Filter = "Arquivos PDF|*.pdf",
-                Multiselect = false
+                Multiselect = true
             };
 
             if (dialog.ShowDialog() == true)
             {
-                ArquivoExtratoSelecionado = dialog.FileName;
-                ExtratoStatus = "PDF selecionado. Clique em 'Importar extrato do produtor' para preparar o processamento.";
+                _arquivosExtratoSelecionados = dialog.FileNames
+                    .Where(File.Exists)
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+
+                if (_arquivosExtratoSelecionados.Count == 0)
+                {
+                    ArquivoExtratoSelecionado = string.Empty;
+                    ExtratoStatus = "Nenhum arquivo valido foi selecionado.";
+                    CommandManager.InvalidateRequerySuggested();
+                    return;
+                }
+
+                ArquivoExtratoSelecionado = string.Join("; ", _arquivosExtratoSelecionados.Select(Path.GetFileName));
+                ExtratoStatus = _arquivosExtratoSelecionados.Count == 1
+                    ? "1 PDF selecionado. Clique em 'Importar extrato do produtor' para iniciar."
+                    : $"{_arquivosExtratoSelecionados.Count} PDFs selecionados. Clique em 'Importar extrato do produtor' para iniciar.";
+                CommandManager.InvalidateRequerySuggested();
             }
         }
 
@@ -818,15 +845,18 @@ namespace AutoLCPR.UI.WPF.ViewModels
                 return;
             }
 
-            if (string.IsNullOrWhiteSpace(ArquivoExtratoSelecionado) || !File.Exists(ArquivoExtratoSelecionado))
+            if (_arquivosExtratoSelecionados.Count == 0)
             {
-                ExtratoStatus = "Arquivo de extrato inválido ou não encontrado.";
+                ExtratoStatus = "Selecione pelo menos um arquivo PDF de extrato.";
                 return;
             }
 
-            if (!string.Equals(Path.GetExtension(ArquivoExtratoSelecionado), ".pdf", StringComparison.OrdinalIgnoreCase))
+            var arquivosInvalidos = _arquivosExtratoSelecionados
+                .Where(item => !File.Exists(item) || !string.Equals(Path.GetExtension(item), ".pdf", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+            if (arquivosInvalidos.Count > 0)
             {
-                ExtratoStatus = "Formato inválido. O extrato do produtor deve ser um arquivo .pdf.";
+                ExtratoStatus = "Um ou mais arquivos selecionados são inválidos. Selecione apenas arquivos .pdf existentes.";
                 return;
             }
 
@@ -834,8 +864,10 @@ namespace AutoLCPR.UI.WPF.ViewModels
             AplicarProgresso(new ImportacaoProgresso
             {
                 Etapa = "Importação de extrato",
-                Mensagem = "Preparando arquivo PDF para leitura...",
-                Indeterminado = true
+                Mensagem = "Preparando arquivos PDF para leitura...",
+                Atual = 0,
+                Total = _arquivosExtratoSelecionados.Count,
+                Indeterminado = false
             });
 
             try
@@ -855,49 +887,86 @@ namespace AutoLCPR.UI.WPF.ViewModels
 
                 LancamentosExtratoImportados.Clear();
 
-                var resultadoParser = await extratoPdfParserService.ParseAsync(ArquivoExtratoSelecionado);
-                AdicionarResumoResultadoExtrato(resultadoParser);
+                var arquivosProcessados = 0;
+                var rebanhosAtualizados = 0;
+                var rebanhosCriados = 0;
+                var arquivosComErro = 0;
 
-                var inscricaoNormalizada = NormalizarSomenteDigitos(resultadoParser.Inscricao);
-                if (inscricaoNormalizada.Length != 9)
+                for (var i = 0; i < _arquivosExtratoSelecionados.Count; i++)
                 {
-                    ExtratoStatus = "Nao foi possivel gerar o rebanho: inscricao invalida ou ausente no extrato.";
-                    MessageBox.Show(ExtratoStatus, "Importacao de Extrato", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    return;
-                }
-
-                var rebanhoExistente = await rebanhoRepository.GetByIdRebanhoAsync(inscricaoNormalizada);
-                if (rebanhoExistente != null)
-                {
-                    var confirmacao = MessageBox.Show(
-                        $"Ja existe um rebanho com a inscricao {inscricaoNormalizada} (Propriedade atual: {rebanhoExistente.NomeRebanho}). Deseja atualizar os dados com os valores do novo extrato?",
-                        "Rebanho ja existente",
-                        MessageBoxButton.YesNo,
-                        MessageBoxImage.Question);
-
-                    if (confirmacao == MessageBoxResult.Yes)
+                    var arquivoAtual = _arquivosExtratoSelecionados[i];
+                    AplicarProgresso(new ImportacaoProgresso
                     {
-                        AtualizarRebanhoComResultadoExtrato(rebanhoExistente, resultadoParser, produtorId, inscricaoNormalizada);
-                        await rebanhoRepository.UpdateAsync(rebanhoExistente);
-                        LancamentosExtratoImportados.Add("Rebanho existente atualizado com os dados do novo extrato.");
-                    }
-                    else
+                        Etapa = "Importação de extrato",
+                        Mensagem = $"Processando {Path.GetFileName(arquivoAtual)} ({i + 1}/{_arquivosExtratoSelecionados.Count})...",
+                        Atual = i,
+                        Total = _arquivosExtratoSelecionados.Count,
+                        Indeterminado = false
+                    });
+
+                    try
                     {
-                        LancamentosExtratoImportados.Add("Rebanho existente mantido sem alteracoes.");
+                        var resultadoParser = await extratoPdfParserService.ParseAsync(arquivoAtual);
+                        AdicionarResumoResultadoExtrato(resultadoParser);
+
+                        var inscricaoNormalizada = NormalizarSomenteDigitos(resultadoParser.Inscricao);
+                        if (inscricaoNormalizada.Length != 9)
+                        {
+                            LancamentosExtratoImportados.Add($"Arquivo {Path.GetFileName(arquivoAtual)} ignorado: inscricao invalida ou ausente no extrato.");
+                            arquivosComErro++;
+                            continue;
+                        }
+
+                        var rebanhoExistente = await rebanhoRepository.GetByIdRebanhoAsync(inscricaoNormalizada);
+                        if (rebanhoExistente != null)
+                        {
+                            var confirmacao = MessageBox.Show(
+                                $"Ja existe um rebanho com a inscricao {inscricaoNormalizada} (Propriedade atual: {rebanhoExistente.NomeRebanho}). Deseja atualizar os dados com os valores do arquivo {Path.GetFileName(arquivoAtual)}?",
+                                "Rebanho ja existente",
+                                MessageBoxButton.YesNo,
+                                MessageBoxImage.Question);
+
+                            if (confirmacao == MessageBoxResult.Yes)
+                            {
+                                AtualizarRebanhoComResultadoExtrato(rebanhoExistente, resultadoParser, produtorId, inscricaoNormalizada);
+                                await rebanhoRepository.UpdateAsync(rebanhoExistente);
+                                rebanhosAtualizados++;
+                                LancamentosExtratoImportados.Add($"Rebanho {inscricaoNormalizada} atualizado com o arquivo {Path.GetFileName(arquivoAtual)}.");
+                            }
+                            else
+                            {
+                                LancamentosExtratoImportados.Add($"Rebanho {inscricaoNormalizada} mantido sem alteracoes (arquivo {Path.GetFileName(arquivoAtual)}).");
+                            }
+                        }
+                        else
+                        {
+                            var novoRebanho = CriarRebanhoComResultadoExtrato(resultadoParser, produtorId, inscricaoNormalizada);
+                            await rebanhoRepository.AddAsync(novoRebanho);
+                            rebanhosCriados++;
+                            LancamentosExtratoImportados.Add($"Novo rebanho {inscricaoNormalizada} criado a partir do arquivo {Path.GetFileName(arquivoAtual)}.");
+                        }
+
+                        arquivosProcessados++;
                     }
-                }
-                else
-                {
-                    var novoRebanho = CriarRebanhoComResultadoExtrato(resultadoParser, produtorId, inscricaoNormalizada);
-                    await rebanhoRepository.AddAsync(novoRebanho);
-                    LancamentosExtratoImportados.Add("Novo rebanho gerado a partir do extrato e salvo com sucesso.");
+                    catch (Exception exArquivo)
+                    {
+                        arquivosComErro++;
+                        LancamentosExtratoImportados.Add($"Erro ao processar {Path.GetFileName(arquivoAtual)}: {exArquivo.Message}");
+                    }
+
+                    AplicarProgresso(new ImportacaoProgresso
+                    {
+                        Etapa = "Importação de extrato",
+                        Mensagem = $"Processando {Path.GetFileName(arquivoAtual)} ({i + 1}/{_arquivosExtratoSelecionados.Count})...",
+                        Atual = i + 1,
+                        Total = _arquivosExtratoSelecionados.Count,
+                        Indeterminado = false
+                    });
                 }
 
                 await Task.Delay(250);
 
-                var mensagem = resultadoParser.ParserImplementado
-                    ? "PDF processado com sucesso e rebanho sincronizado."
-                    : "PDF validado e pronto para processamento. A leitura automatica dos campos do rebanho sera implementada na proxima etapa.";
+                var mensagem = $"Processamento concluido. Arquivos processados: {arquivosProcessados}. Rebanhos criados: {rebanhosCriados}. Rebanhos atualizados: {rebanhosAtualizados}. Arquivos com erro: {arquivosComErro}.";
                 ExtratoStatus = mensagem;
                 MessageBox.Show(mensagem, "Importação de Extrato", MessageBoxButton.OK, MessageBoxImage.Information);
             }
@@ -978,6 +1047,232 @@ namespace AutoLCPR.UI.WPF.ViewModels
 
             var texto = valor.ToString();
             return string.IsNullOrWhiteSpace(texto) ? "[pendente]" : texto;
+        }
+
+        public string RhStatus
+        {
+            get => _rhStatus;
+            set
+            {
+                if (_rhStatus != value)
+                {
+                    _rhStatus = value;
+                    OnPropertyChanged(nameof(RhStatus));
+                }
+            }
+        }
+
+        private void SelecionarArquivosRh()
+        {
+            var dialog = new OpenFileDialog
+            {
+                Title = "Selecionar PDFs de Folha de Pagamento",
+                Filter = "Arquivos PDF|*.pdf",
+                Multiselect = true
+            };
+
+            if (dialog.ShowDialog() == true)
+            {
+                _arquivosRhSelecionados = dialog.FileNames.ToList();
+                ArquivosRhDisplay.Clear();
+                foreach (var f in _arquivosRhSelecionados)
+                    ArquivosRhDisplay.Add(Path.GetFileName(f));
+                RhStatus = $"{_arquivosRhSelecionados.Count} arquivo(s) selecionado(s). Clique em 'Importar despesas' para processar.";
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
+
+        private async Task ImportarFolha()
+        {
+            if (_serviceProvider == null)
+            {
+                RhStatus = "Serviços não inicializados.";
+                return;
+            }
+
+            if (_contextoImportacao?.ProdutorSelecionadoId == null || _contextoImportacao.ProdutorSelecionadoId <= 0)
+            {
+                RhStatus = "Nenhum produtor selecionado. Selecione um produtor na Dashboard antes de importar.";
+                return;
+            }
+
+            if (_arquivosRhSelecionados.Count == 0)
+            {
+                RhStatus = "Nenhum arquivo selecionado.";
+                return;
+            }
+
+            IsImportando = true;
+            ItensRhImportados.Clear();
+            AplicarProgresso(new ImportacaoProgresso
+            {
+                Etapa = "Importação RH",
+                Mensagem = "Preparando leitura dos PDFs...",
+                Indeterminado = true
+            });
+
+            try
+            {
+                using var scope = _serviceProvider.CreateScope();
+                var notaFiscalRepository = scope.ServiceProvider.GetRequiredService<INotaFiscalRepository>();
+                var lancamentoRepository = scope.ServiceProvider.GetRequiredService<ILancamentoRepository>();
+                var folhaParser = scope.ServiceProvider.GetRequiredService<IFolhaPagamentoPdfParserService>();
+
+                var produtorId = _contextoImportacao.ProdutorSelecionadoId.Value;
+
+                var notasExistentes = await notaFiscalRepository.GetByProdutorIdAsync(produtorId);
+                var numerosExistentes = notasExistentes
+                    .Select(n => n.NumeroDaNota)
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+                int totalImportados = 0;
+                int totalDuplicados = 0;
+                int totalErros = 0;
+
+                for (int fi = 0; fi < _arquivosRhSelecionados.Count; fi++)
+                {
+                    var arquivo = _arquivosRhSelecionados[fi];
+                    AplicarProgresso(new ImportacaoProgresso
+                    {
+                        Etapa = "Importação RH",
+                        Mensagem = $"Lendo {Path.GetFileName(arquivo)} ({fi + 1}/{_arquivosRhSelecionados.Count})...",
+                        Atual = fi,
+                        Total = _arquivosRhSelecionados.Count,
+                        Indeterminado = false
+                    });
+
+                    FolhaPagamentoPdfDTO resultado;
+                    try
+                    {
+                        resultado = await folhaParser.ParseAsync(arquivo);
+                    }
+                    catch (Exception ex)
+                    {
+                        ItensRhImportados.Add($"✗ {Path.GetFileName(arquivo)}: Erro na leitura — {ex.Message}");
+                        totalErros++;
+                        continue;
+                    }
+
+                    if (!resultado.ParserImplementado)
+                    {
+                        ItensRhImportados.Add($"✗ {Path.GetFileName(arquivo)}: {resultado.Observacao}");
+                        totalErros++;
+                        continue;
+                    }
+
+                    ItensRhImportados.Add($"📄 {Path.GetFileName(arquivo)} — {resultado.Itens.Count} item(ns) encontrado(s)");
+
+                    foreach (var item in resultado.Itens)
+                    {
+                        var numNota = GerarNumeroNotaRh(item);
+                        if (numerosExistentes.Contains(numNota))
+                        {
+                            totalDuplicados++;
+                            continue;
+                        }
+
+                        var clienteFornecedor = string.IsNullOrWhiteSpace(item.Empregado)
+                            ? item.TipoCalculo
+                            : item.Empregado;
+
+                        var descricao = LimitarTexto(
+                            $"{item.TipoCalculo} {item.Competencia} — {clienteFornecedor}",
+                            500, item.TipoCalculo);
+
+                        var dataLancamento = item.Vencimento ?? DateTime.Today;
+
+                        var notaFiscal = new NotaFiscal
+                        {
+                            ChaveAcesso = null,
+                            ProdutorId = produtorId,
+                            TipoNota = TipoNota.Entrada,
+                            NumeroDaNota = LimitarTexto(numNota, 20, numNota),
+                            DataEmissao = dataLancamento,
+                            ValorNotaFiscal = item.Valor,
+                            Origem = LimitarTexto(clienteFornecedor, 200, item.TipoCalculo),
+                            Destino = LimitarTexto(clienteFornecedor, 200, item.TipoCalculo),
+                            Descricao = descricao,
+                            NaturezaOperacao = item.TipoCalculo,
+                            Cfops = null,
+                            ItensDescricao = descricao
+                        };
+
+                        await notaFiscalRepository.AddAsync(notaFiscal);
+                        numerosExistentes.Add(numNota);
+
+                        var lancamento = new Lancamento
+                        {
+                            Tipo = TipoLancamento.Despesa,
+                            ProdutorId = produtorId,
+                            ClienteFornecedor = LimitarTexto(clienteFornecedor, 200, item.TipoCalculo),
+                            Descricao = descricao,
+                            Situacao = "Em Aberto",
+                            Valor = item.Valor,
+                            Data = dataLancamento,
+                            Vencimento = dataLancamento
+                        };
+
+                        await lancamentoRepository.AddAsync(lancamento);
+                        totalImportados++;
+                        ItensRhImportados.Add($"  ✓ {item.TipoCalculo} {item.Competencia} — {clienteFornecedor}: R$ {item.Valor:N2}");
+                    }
+
+                    AplicarProgresso(new ImportacaoProgresso
+                    {
+                        Etapa = "Importação RH",
+                        Mensagem = $"Lendo {Path.GetFileName(arquivo)} ({fi + 1}/{_arquivosRhSelecionados.Count})...",
+                        Atual = fi + 1,
+                        Total = _arquivosRhSelecionados.Count,
+                        Indeterminado = false
+                    });
+                }
+
+                var resumo = new System.Text.StringBuilder();
+                resumo.AppendLine($"✓ Itens importados: {totalImportados}");
+                if (totalDuplicados > 0) resumo.AppendLine($"⚠ Duplicados ignorados: {totalDuplicados}");
+                if (totalErros > 0) resumo.AppendLine($"✗ Arquivos com erro: {totalErros}");
+
+                RhStatus = $"Importação concluída. {totalImportados} despesa(s) criada(s).";
+                MessageBox.Show(resumo.ToString(), "Importação de Folha de Pagamento", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                RhStatus = $"Erro durante importação: {ex.Message}";
+                MessageBox.Show(RhStatus, "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                LimparProgresso();
+                IsImportando = false;
+            }
+        }
+
+        private static string GerarNumeroNotaRh(FolhaPagamentoItemDTO item)
+        {
+            var comp = item.Competencia.Replace("/", "");
+            var tipo = item.TipoCalculo switch
+            {
+                "Folha Mensal" => "FM",
+                "Férias" => "FE",
+                "13º Adiantamento" => "13A",
+                "13º Integral" => "13I",
+                "INSS Mensal" => "INM",
+                "INSS 13º" => "IN3",
+                "FGTS" => "FGT",
+                "FGTS 13º" => "FG3",
+                _ => item.TipoCalculo.Length >= 3
+                    ? item.TipoCalculo[..3].ToUpperInvariant()
+                    : item.TipoCalculo.ToUpperInvariant()
+            };
+
+            var maxEmp = 20 - 2 - tipo.Length - comp.Length;
+            var emp = string.IsNullOrWhiteSpace(item.Empregado)
+                ? string.Empty
+                : item.Empregado.Length <= maxEmp
+                    ? item.Empregado.ToUpperInvariant()
+                    : item.Empregado[..Math.Max(0, maxEmp)].ToUpperInvariant();
+
+            return $"RH{tipo}{comp}{emp}";
         }
     }
 }

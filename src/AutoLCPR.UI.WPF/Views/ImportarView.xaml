@@ -51,7 +51,7 @@
                         </Button>
                         <Button Command="{Binding SelecionarExtratosCommand}" 
                                 Background="Transparent"
-                                Foreground="{Binding SecaoSelecionada, Converter={StaticResource FiltroToColorConverter}, ConverterParameter=Extratos}"
+                                Foreground="{Binding SecaoSelecionada, Converter={StaticResource FiltroToColorConverter}, ConverterParameter=AtividadeRural}"
                                 Padding="15,8,15,8" 
                                 HorizontalAlignment="Left" 
                                 VerticalAlignment="Center"
@@ -59,8 +59,21 @@
                                 BorderThickness="0" 
                                 FontWeight="SemiBold" 
                                 FontSize="12" 
-                                Margin="0">
-                            <TextBlock><Run Text="📋"/><Run Text=" Extratos"/></TextBlock>
+                                Margin="0,0,20,0">
+                            <TextBlock><Run Text="&#x1F33F;"/><Run Text=" Atividade Rural"/></TextBlock>
+                        </Button>
+                        <Button Command="{Binding SelecionarRecursosHumanosCommand}" 
+                                Background="Transparent"
+                                Foreground="{Binding SecaoSelecionada, Converter={StaticResource FiltroToColorConverter}, ConverterParameter=RecursosHumanos}"
+                                Padding="15,8,15,8" 
+                                HorizontalAlignment="Left" 
+                                VerticalAlignment="Center"
+                                Cursor="Hand" 
+                                BorderThickness="0" 
+                                FontWeight="SemiBold" 
+                                FontSize="12" 
+                                Margin="0">  
+                            <TextBlock><Run Text="&#x1F465;"/><Run Text=" Recursos Humanos"/></TextBlock>
                         </Button>
                     </StackPanel>
                 </Border>
@@ -160,8 +173,8 @@
             </Border>
                         </Grid>
 
-                        <!-- Aba: Extratos -->
-                        <Grid Visibility="{Binding SecaoSelecionada, Converter={StaticResource FiltroToVisibilityConverter}, ConverterParameter=Extratos}">
+                        <!-- Aba: Atividade Rural -->
+                        <Grid Visibility="{Binding SecaoSelecionada, Converter={StaticResource FiltroToVisibilityConverter}, ConverterParameter=AtividadeRural}">
                             <Border Background="White"
                                     BorderBrush="#E8EAED"
                                     BorderThickness="1"
@@ -200,7 +213,7 @@
                                  IsReadOnly="True"/>
 
                         <Button Grid.Column="2"
-                            Content="Selecionar arquivo PDF"
+                            Content="Selecionar arquivos PDF"
                                 Command="{Binding SelecionarArquivoExtratoCommand}"
                                 Height="36"
                                 FontWeight="SemiBold"/>
@@ -235,6 +248,74 @@
                              Height="220"/>
                 </StackPanel>
             </Border>
+                        </Grid>
+
+                        <!-- Aba: Recursos Humanos -->
+                        <Grid Visibility="{Binding SecaoSelecionada, Converter={StaticResource FiltroToVisibilityConverter}, ConverterParameter=RecursosHumanos}">
+                            <Border Background="White"
+                                    BorderBrush="#E8EAED"
+                                    BorderThickness="1"
+                                    Padding="20"
+                                    CornerRadius="8">
+                                <StackPanel>
+                                    <TextBlock Text="Importar Folha de Pagamento"
+                                               FontSize="22"
+                                               FontWeight="SemiBold"
+                                               Foreground="#202124"
+                                               Margin="0,0,0,8"/>
+
+                                    <TextBlock Text="Importe os PDFs de Pagamento de Folha e Pagamento de Encargos para registrar automaticamente as despesas trabalhistas do produtor."
+                                               Foreground="#5F6368"
+                                               TextWrapping="Wrap"
+                                               Margin="0,0,0,6"/>
+
+                                    <TextBlock Text="Tipos detectados: Folha Mensal, Férias, 13º Adiantamento, 13º Integral, INSS Mensal, INSS 13º, FGTS e FGTS 13º."
+                                               Foreground="#5F6368"
+                                               TextWrapping="Wrap"
+                                               Margin="0,0,0,14"/>
+
+                                    <Grid Margin="0,0,0,14">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="220"/>
+                                            <ColumnDefinition Width="12"/>
+                                            <ColumnDefinition Width="220"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <Button Grid.Column="0"
+                                                Content="Selecionar PDFs"
+                                                Command="{Binding SelecionarArquivosRhCommand}"
+                                                Height="36"
+                                                FontWeight="SemiBold"/>
+
+                                        <Button Grid.Column="2"
+                                                Content="Importar despesas"
+                                                Command="{Binding ImportarFolhaCommand}"
+                                                Height="36"
+                                                FontWeight="SemiBold"/>
+                                    </Grid>
+
+                                    <TextBlock Text="{Binding RhStatus}"
+                                               Foreground="#5F6368"
+                                               TextWrapping="Wrap"
+                                               Margin="0,0,0,14"/>
+
+                                    <TextBlock Text="Arquivos selecionados"
+                                               FontWeight="SemiBold"
+                                               Margin="0,0,0,8"
+                                               Foreground="#202124"/>
+
+                                    <ListBox ItemsSource="{Binding ArquivosRhDisplay}"
+                                             Height="80"
+                                             Margin="0,0,0,14"/>
+
+                                    <TextBlock Text="Log de importa&#xE7;&#xE3;o"
+                                               FontWeight="SemiBold"
+                                               Margin="0,0,0,8"
+                                               Foreground="#202124"/>
+
+                                    <ListBox ItemsSource="{Binding ItensRhImportados}" Height="280"/>
+                                </StackPanel>
+                            </Border>
                         </Grid>
                     </StackPanel>
                 </ScrollViewer>
