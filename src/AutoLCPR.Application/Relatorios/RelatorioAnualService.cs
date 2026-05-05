@@ -32,14 +32,14 @@ public sealed class RelatorioAnualService : IRelatorioAnualService
         _nfeConfigService = nfeConfigService;
     }
 
-    public byte[] GerarRelatorioAnual(int anoFiscal)
+    public byte[] GerarRelatorioAnual(int anoFiscal, int? produtorId = null)
     {
-        return GerarRelatorioAnualAsync(anoFiscal, CancellationToken.None).GetAwaiter().GetResult();
+        return GerarRelatorioAnualAsync(anoFiscal, produtorId, CancellationToken.None).GetAwaiter().GetResult();
     }
 
-    private async Task<byte[]> GerarRelatorioAnualAsync(int anoFiscal, CancellationToken cancellationToken)
+    private async Task<byte[]> GerarRelatorioAnualAsync(int anoFiscal, int? produtorId, CancellationToken cancellationToken)
     {
-        var dadosColetados = await ColetarDadosAsync(anoFiscal, cancellationToken);
+        var dadosColetados = await ColetarDadosAsync(anoFiscal, produtorId, cancellationToken);
         var modelo = MontarModelo(dadosColetados, anoFiscal);
 
         try
@@ -59,13 +59,17 @@ public sealed class RelatorioAnualService : IRelatorioAnualService
         }
     }
 
-    private async Task<RelatorioAnualDadosColetados> ColetarDadosAsync(int anoFiscal, CancellationToken cancellationToken)
+    private async Task<RelatorioAnualDadosColetados> ColetarDadosAsync(int anoFiscal, int? produtorSelecionadoId, CancellationToken cancellationToken)
     {
         var (dataInicio, dataFim) = ResolverPeriodo(anoFiscal);
 
-        var produtor = (await _produtorRepository.GetAllAsync())
+        var produtores = (await _produtorRepository.GetAllAsync())
             .OrderBy(item => item.Nome)
-            .FirstOrDefault();
+            .ToList();
+
+        var produtor = produtorSelecionadoId.HasValue
+            ? produtores.FirstOrDefault(item => item.Id == produtorSelecionadoId.Value)
+            : produtores.FirstOrDefault();
 
         var resumoMensal = await _lancamentoRepository.ObterResumoMensalAsync(dataInicio, dataFim, produtor?.Id, cancellationToken);
         var totalReceitas = await _lancamentoRepository.ObterTotalPorTipoAsync(dataInicio, dataFim, TipoLancamento.Receita, produtor?.Id, cancellationToken);

@@ -125,11 +125,13 @@ namespace AutoLCPR.UI.WPF.ViewModels
 
         private Task GerarRelatorioAnualPdf()
         {
+            var produtorSelecionadoId = _importacaoContextoService?.ProdutorSelecionadoId;
+
             return GerarPdfAsync(
                 "Gerando relatório anual em PDF...",
                 "Salvar Relatório Consolidado Anual",
                 $"LivroCaixa_{AnoFiscal}_{AnoFiscal + 1}.pdf",
-                serviceProvider => serviceProvider.GetRequiredService<IRelatorioAnualService>().GerarRelatorioAnual(AnoFiscal),
+                serviceProvider => serviceProvider.GetRequiredService<IRelatorioAnualService>().GerarRelatorioAnual(AnoFiscal, produtorSelecionadoId),
                 "Erro ao gerar o relatório anual.");
         }
 

@@ -326,6 +326,9 @@ namespace AutoLCPR.UI.WPF.Views
                 return;
             }
 
+            const int limiteConsultasVaziasSequenciais = 10;
+            var consultasVaziasSequenciais = 0;
+
             var diretorioCache = await ObterDiretorioCacheHtmlProdutorAsync();
             await AtualizarProgressoAsync(new ImportacaoProgresso
             {
@@ -348,13 +351,35 @@ namespace AutoLCPR.UI.WPF.Views
                     Total = notas.Count,
                     Indeterminado = false
                 });
-                var detalhes = await ExtrairDetalhesNotaAsync(nota.ChaveAcesso, nota.IdentificadorDetalhe, diretorioCache);
+                var resultadoDetalhe = await ExtrairDetalhesNotaAsync(nota.ChaveAcesso, nota.IdentificadorDetalhe, diretorioCache);
+                var detalhes = resultadoDetalhe.Detalhes;
                 if (detalhes != null)
                 {
                     nota.NaturezaOperacao = detalhes.NaturezaOperacao;
                     nota.DescricoesProdutosServicos = detalhes.DescricoesProdutosServicos;
                     nota.Cfops = detalhes.Cfops;
                     nota.HtmlConsulta = detalhes.HtmlConsulta;
+                    await SalvarHtmlDetalheNoCacheAsync(diretorioCache, nota.ChaveAcesso, detalhes.HtmlConsulta);
+                    consultasVaziasSequenciais = 0;
+                }
+                else
+                {
+                    consultasVaziasSequenciais++;
+                    if (consultasVaziasSequenciais >= limiteConsultasVaziasSequenciais)
+                    {
+                        var mensagemInterrupcao = $"Captura interrompida: {limiteConsultasVaziasSequenciais} tentativas sequenciais de detalhamento/download da NF-e retornaram vazio.";
+                        await AtualizarStatusAsync(mensagemInterrupcao);
+                        await AtualizarProgressoAsync(new ImportacaoProgresso
+                        {
+                            Etapa = "Captura de NF-es",
+                            Mensagem = mensagemInterrupcao,
+                            Atual = i + 1,
+                            Total = notas.Count,
+                            Indeterminado = false
+                        });
+
+                        throw new InvalidOperationException(mensagemInterrupcao);
+                    }
                 }
 
                 await AtualizarProgressoAsync(new ImportacaoProgresso
@@ -417,17 +442,17 @@ namespace AutoLCPR.UI.WPF.Views
             return await nfeImportService.ObterCaminoPastaProdutorAsync(cpf);
         }
 
-        private async Task<SefazNFeDetalheCapturado?> ExtrairDetalhesNotaAsync(string chaveAcesso, string? identificadorDetalhe, string? diretorioCache)
+        private async Task<(SefazNFeDetalheCapturado? Detalhes, bool DownloadRetornouVazio)> ExtrairDetalhesNotaAsync(string chaveAcesso, string? identificadorDetalhe, string? diretorioCache)
         {
             if (SefazWebView.CoreWebView2 == null || string.IsNullOrWhiteSpace(chaveAcesso))
             {
-                return null;
+                return (null, false);
             }
 
             var detalheCache = await TentarLerDetalheDoCacheAsync(diretorioCache, chaveAcesso);
             if (detalheCache != null)
             {
-                return detalheCache;
+                return (detalheCache, false);
             }
 
             TaskCompletionSource<string?> detalheUrlTcs;
@@ -565,7 +590,7 @@ namespace AutoLCPR.UI.WPF.Views
 
             if (string.IsNullOrWhiteSpace(detalheUrl))
             {
-                return null;
+                return (null, false);
             }
 
             var html = await BaixarHtmlDetalheAsync(detalheUrl);
@@ -576,14 +601,14 @@ namespace AutoLCPR.UI.WPF.Views
 
             if (string.IsNullOrWhiteSpace(html))
             {
-                return null;
+                return (null, true);
             }
 
             var detalheExtraido = await Task.Run(() => ExtrairDetalhesDeHtml(html));
             detalheExtraido.Sucesso = true;
             detalheExtraido.DetalheUrl = detalheUrl;
             detalheExtraido.HtmlConsulta = html;
-            return detalheExtraido;
+            return (detalheExtraido, false);
         }
 
         private async Task<string?> BaixarHtmlDetalheAsync(string detalheUrl)
@@ -768,6 +793,26 @@ namespace AutoLCPR.UI.WPF.Views
             catch
             {
                 return null;
+            }
+        }
+
+        private static async Task SalvarHtmlDetalheNoCacheAsync(string? diretorioCache, string chaveAcesso, string? html)
+        {
+            if (string.IsNullOrWhiteSpace(diretorioCache)
+                || string.IsNullOrWhiteSpace(chaveAcesso)
+                || string.IsNullOrWhiteSpace(html))
+            {
+                return;
+            }
+
+            try
+            {
+                Directory.CreateDirectory(diretorioCache);
+                var filePath = Path.Combine(diretorioCache, $"{chaveAcesso}.html");
+                await File.WriteAllTextAsync(filePath, html);
+            }
+            catch
+            {
             }
         }
 

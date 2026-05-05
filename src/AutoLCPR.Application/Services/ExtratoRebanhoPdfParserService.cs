@@ -407,6 +407,7 @@ public sealed class ExtratoRebanhoPdfParserService : IExtratoRebanhoPdfParserSer
         int saldoFinal = 0;
 
         bool encontrouAbertura = false;
+        var registros = new List<RegistroOperacaoExtrato>();
 
         for (int i = 0; i < linhas.Length; i++)
         {
@@ -435,60 +436,119 @@ public sealed class ExtratoRebanhoPdfParserService : IExtratoRebanhoPdfParserSer
             if (!encontrouAbertura)
                 continue;
 
+            // Procurar por "Saldo:" para atualizar o saldo final
+            if (linha.StartsWith("Saldo:", StringComparison.OrdinalIgnoreCase))
+            {
+                saldoFinal = ExtrairValorGeralDeSaldo(linha);
+                continue;
+            }
+
             // Processar operacoes - verificar a primeira coluna/palavra
             var palavrasLinha = linha.Split(new[] { " ", "\t" }, StringSplitOptions.RemoveEmptyEntries);
             
             if (palavrasLinha.Length == 0)
                 continue;
 
-            var operacao = palavrasLinha[0];
+            var operacao = ExtrairOperacaoDaLinha(linha, palavrasLinha);
+            if (string.IsNullOrWhiteSpace(operacao))
+            {
+                continue;
+            }
+
+            var ehLinhaEstorno = linha.Contains("ESTORNO", StringComparison.OrdinalIgnoreCase);
+            var ehOperacaoMovimentacao = operacao.StartsWith("CR-", StringComparison.OrdinalIgnoreCase)
+                                       || operacao.StartsWith("DB-", StringComparison.OrdinalIgnoreCase);
+
+            if (!ehLinhaEstorno && !ehOperacaoMovimentacao)
+            {
+                continue;
+            }
+
+            var documento = ExtrairDocumentoDaLinha(linha, operacao);
+            var valorOperacao = Math.Abs(ExtrairValorGeralDeOperacao(linha));
+
+            registros.Add(new RegistroOperacaoExtrato
+            {
+                Linha = linha,
+                Operacao = operacao,
+                Documento = documento,
+                PossuiEstorno = ehLinhaEstorno,
+                Assinatura = $"{operacao}|{valorOperacao}"
+            });
+        }
+
+        var chavesComEstorno = registros
+            .Where(item => !string.IsNullOrWhiteSpace(item.Documento))
+            .GroupBy(item => item.Documento)
+            .Where(grupo => grupo.Any(item => item.PossuiEstorno))
+            .Select(grupo => grupo.Key)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var estornosPendentesPorAssinatura = registros
+            .Where(item => item.PossuiEstorno && string.IsNullOrWhiteSpace(item.Documento))
+            .GroupBy(item => item.Assinatura)
+            .ToDictionary(group => group.Key, group => group.Count(), StringComparer.OrdinalIgnoreCase);
+
+        foreach (var registro in registros)
+        {
+            if (registro.PossuiEstorno)
+            {
+                continue;
+            }
+
+            if (!string.IsNullOrWhiteSpace(registro.Documento) && chavesComEstorno.Contains(registro.Documento))
+            {
+                continue;
+            }
+
+            if (string.IsNullOrWhiteSpace(registro.Documento)
+                && estornosPendentesPorAssinatura.TryGetValue(registro.Assinatura, out var quantidadePendentes)
+                && quantidadePendentes > 0)
+            {
+                estornosPendentesPorAssinatura[registro.Assinatura] = quantidadePendentes - 1;
+                continue;
+            }
 
             // Nascimentos
-            if (operacao.Equals("CR-NASCIMENTO", StringComparison.OrdinalIgnoreCase))
+            if (registro.Operacao.Equals("CR-NASCIMENTO", StringComparison.OrdinalIgnoreCase))
             {
-                totalNascimentos += ExtrairValorGeralDeOperacao(linha);
+                totalNascimentos += ExtrairValorGeralDeOperacao(registro.Linha);
             }
             // Mortes
-            else if (operacao.Equals("DB-MORTE", StringComparison.OrdinalIgnoreCase))
+            else if (registro.Operacao.Equals("DB-MORTE", StringComparison.OrdinalIgnoreCase))
             {
-                totalMortesConsumo += Math.Abs(ExtrairValorGeralDeOperacao(linha));
+                totalMortesConsumo += Math.Abs(ExtrairValorGeralDeOperacao(registro.Linha));
             }
             // Consumo
-            else if (operacao.Equals("DB-CONSUMO", StringComparison.OrdinalIgnoreCase))
+            else if (registro.Operacao.Equals("DB-CONSUMO", StringComparison.OrdinalIgnoreCase))
             {
-                totalMortesConsumo += Math.Abs(ExtrairValorGeralDeOperacao(linha));
+                totalMortesConsumo += Math.Abs(ExtrairValorGeralDeOperacao(registro.Linha));
             }
             // Entradas
-            else if ((operacao.Equals("CR-eGTA", StringComparison.OrdinalIgnoreCase) || 
-                      operacao.StartsWith("CR-ENTRADA", StringComparison.OrdinalIgnoreCase)))
+            else if ((registro.Operacao.Equals("CR-eGTA", StringComparison.OrdinalIgnoreCase) || 
+                      registro.Operacao.StartsWith("CR-ENTRADA", StringComparison.OrdinalIgnoreCase)))
             {
-                if (!EhMovimentacaoEra(linha, operacao))
+                if (!EhMovimentacaoEra(registro.Linha, registro.Operacao))
                 {
-                    var valor = ExtrairValorGeralDeOperacao(linha);
+                    var valor = ExtrairValorGeralDeOperacao(registro.Linha);
                     if (valor > 0)
                         totalEntradas += valor;
                 }
             }
             // Saidas
-            else if (operacao.Equals("DB-eGTA", StringComparison.OrdinalIgnoreCase))
+            else if (registro.Operacao.Equals("DB-eGTA", StringComparison.OrdinalIgnoreCase))
             {
-                if (!EhMovimentacaoEra(linha, operacao))
+                if (!EhMovimentacaoEra(registro.Linha, registro.Operacao))
                 {
-                    totalSaidas += Math.Abs(ExtrairValorGeralDeOperacao(linha));
+                    totalSaidas += Math.Abs(ExtrairValorGeralDeOperacao(registro.Linha));
                 }
             }
-            else if (operacao.StartsWith("DB-SAIDA", StringComparison.OrdinalIgnoreCase))
+            else if (registro.Operacao.StartsWith("DB-SAIDA", StringComparison.OrdinalIgnoreCase))
             {
-                if (!EhMovimentacaoEra(linha, operacao))
+                if (!EhMovimentacaoEra(registro.Linha, registro.Operacao))
                 {
-                    totalSaidas += Math.Abs(ExtrairValorGeralDeOperacao(linha));
+                    totalSaidas += Math.Abs(ExtrairValorGeralDeOperacao(registro.Linha));
                 }
-            }
-
-            // Procurar por "Saldo:" para atualizar o saldo final
-            if (linha.StartsWith("Saldo:", StringComparison.OrdinalIgnoreCase))
-            {
-                saldoFinal = ExtrairValorGeralDeSaldo(linha);
             }
         }
 
@@ -511,6 +571,80 @@ public sealed class ExtratoRebanhoPdfParserService : IExtratoRebanhoPdfParserSer
         }
 
         return 0;
+    }
+
+    private static string? ExtrairOperacaoDaLinha(string linha, string[] palavrasLinha)
+    {
+        if (string.IsNullOrWhiteSpace(linha) || palavrasLinha.Length == 0)
+        {
+            return null;
+        }
+
+        var primeiraPalavra = palavrasLinha[0];
+        if (primeiraPalavra.StartsWith("CR-", StringComparison.OrdinalIgnoreCase)
+            || primeiraPalavra.StartsWith("DB-", StringComparison.OrdinalIgnoreCase))
+        {
+            return primeiraPalavra;
+        }
+
+        var matchEstorno = Regex.Match(
+            linha,
+            @"ESTORNO\s*[-–—]\s*(?<op>(CR|DB)-[A-Za-z0-9-]+)",
+            RegexOptions.IgnoreCase);
+
+        if (matchEstorno.Success)
+        {
+            return matchEstorno.Groups["op"].Value.Trim();
+        }
+
+        return null;
+    }
+
+    private static string? ExtrairDocumentoDaLinha(string linha, string operacao)
+    {
+        if (string.IsNullOrWhiteSpace(linha))
+        {
+            return null;
+        }
+
+        // Formato esperado do PDF: Data/Hora Documento ...
+        // Ex: "02/07/2025 13:27:33 892093/P 288315464 - VIVINEI TAVEIRA..."
+        // O documento vem logo após a data/hora (segundo token quando há hora com segundos)
+        
+        // Procurar por padrão de data/hora seguido de documento
+        var matchDataDoc = Regex.Match(
+            linha,
+            @"\d{2}/\d{2}/\d{4}\s+\d{2}:\d{2}:\d{2}\s+(?<doc>\d+/[A-Z])",
+            RegexOptions.IgnoreCase);
+
+        if (matchDataDoc.Success)
+        {
+            return matchDataDoc.Groups["doc"].Value.Trim().ToUpperInvariant();
+        }
+
+        // Fallback: procurar por padrão sem segundos
+        var matchDataDocSemSeg = Regex.Match(
+            linha,
+            @"\d{2}/\d{2}/\d{4}\s+(?<doc>\d+/[A-Z])",
+            RegexOptions.IgnoreCase);
+
+        if (matchDataDocSemSeg.Success)
+        {
+            return matchDataDocSemSeg.Groups["doc"].Value.Trim().ToUpperInvariant();
+        }
+
+        // Último fallback: procurar por qualquer padrão número/letra (tipo 892093/P ou 632451/P)
+        var matchDocGenerico = Regex.Match(
+            linha,
+            @"\b(?<doc>\d{4,}[/\-][A-Z])\b",
+            RegexOptions.IgnoreCase);
+
+        if (matchDocGenerico.Success)
+        {
+            return matchDocGenerico.Groups["doc"].Value.Trim().ToUpperInvariant();
+        }
+
+        return null;
     }
 
     private static bool EhMovimentacaoEra(string linha, string operacao)
@@ -539,5 +673,14 @@ public sealed class ExtratoRebanhoPdfParserService : IExtratoRebanhoPdfParserSer
         }
 
         return 0;
+    }
+
+    private sealed class RegistroOperacaoExtrato
+    {
+        public required string Linha { get; init; }
+        public required string Operacao { get; init; }
+        public string? Documento { get; init; }
+        public required bool PossuiEstorno { get; init; }
+        public required string Assinatura { get; init; }
     }
 }

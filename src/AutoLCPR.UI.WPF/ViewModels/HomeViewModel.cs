@@ -9,8 +9,10 @@ using System.Windows.Input;
 using System.Windows.Data;
 using AutoLCPR.Domain.Entities;
 using AutoLCPR.Domain.Repositories;
+using AutoLCPR.Infrastructure.Data;
 using AutoLCPR.UI.WPF.Services;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.EntityFrameworkCore;
 using AutoLCPR.UI.WPF.Commands;
 
 namespace AutoLCPR.UI.WPF.ViewModels
@@ -648,10 +650,12 @@ namespace AutoLCPR.UI.WPF.ViewModels
                 {
                     using var scope = _serviceProvider.CreateScope();
                     var repo = scope.ServiceProvider.GetRequiredService<INotaFiscalRepository>();
+                    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
                     var idsExcluidos = notasParaExcluir.Select(item => item.Id).ToList();
                     foreach (var nota in notasParaExcluir)
                     {
                         await repo.DeleteAsync(nota.Id);
+                        await ExcluirLancamentosLegadosDaNotaAsync(dbContext, nota);
                     }
 
                     var idsPersistentes = new List<int>();
@@ -721,10 +725,12 @@ namespace AutoLCPR.UI.WPF.ViewModels
                 {
                     using var scope = _serviceProvider.CreateScope();
                     var repo = scope.ServiceProvider.GetRequiredService<INotaFiscalRepository>();
+                    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
                     var idsExcluidos = notasParaExcluir.Select(item => item.Id).ToList();
                     foreach (var nota in notasParaExcluir)
                     {
                         await repo.DeleteAsync(nota.Id);
+                        await ExcluirLancamentosLegadosDaNotaAsync(dbContext, nota);
                     }
 
                     var idsPersistentes = new List<int>();
@@ -821,6 +827,44 @@ namespace AutoLCPR.UI.WPF.ViewModels
                 : new System.Collections.Generic.List<NotaFiscal>();
         }
 
+        private static async Task ExcluirLancamentosLegadosDaNotaAsync(AppDbContext dbContext, NotaFiscal nota)
+        {
+            var tipoLancamento = nota.TipoNota == TipoNota.Saida ? TipoLancamento.Receita : TipoLancamento.Despesa;
+            var diaInicio = nota.DataEmissao.Date;
+            var diaFim = diaInicio.AddDays(1);
+
+            // Primeiro tenta localizar por número da NF na descrição (mais preciso).
+            var porNumeroNota = await dbContext.Lancamentos
+                .Where(item => item.ProdutorId == nota.ProdutorId
+                    && item.Tipo == tipoLancamento
+                    && item.Data >= diaInicio
+                    && item.Data < diaFim
+                    && item.Descricao.Contains(nota.NumeroDaNota))
+                .ToListAsync();
+
+            if (porNumeroNota.Count > 0)
+            {
+                dbContext.Lancamentos.RemoveRange(porNumeroNota);
+                await dbContext.SaveChangesAsync();
+                return;
+            }
+
+            // Fallback legado: elimina lançamentos com mesma data/valor/tipo para o produtor.
+            var porValorData = await dbContext.Lancamentos
+                .Where(item => item.ProdutorId == nota.ProdutorId
+                    && item.Tipo == tipoLancamento
+                    && item.Data >= diaInicio
+                    && item.Data < diaFim
+                    && item.Valor == nota.ValorNotaFiscal)
+                .ToListAsync();
+
+            if (porValorData.Count > 0)
+            {
+                dbContext.Lancamentos.RemoveRange(porValorData);
+                await dbContext.SaveChangesAsync();
+            }
+        }
+
         private async Task LoadProdutoresAsync()
         {
             if (_serviceProvider == null)
@@ -840,6 +884,17 @@ namespace AutoLCPR.UI.WPF.ViewModels
                 foreach (var produtor in produtores)
                 {
                     Produtores.Add(produtor);
+                }
+
+                var produtorSelecionadoDoContexto = _importacaoContextoService?.ProdutorSelecionadoId;
+                if (produtorSelecionadoDoContexto.HasValue)
+                {
+                    var produtorRestaurado = Produtores.FirstOrDefault(p => p.Id == produtorSelecionadoDoContexto.Value);
+                    if (produtorRestaurado != null)
+                    {
+                        ProdutorSelecionado = produtorRestaurado;
+                        return;
+                    }
                 }
 
                 if (ProdutorSelecionado == null || !Produtores.Any(p => p.Id == ProdutorSelecionado.Id))

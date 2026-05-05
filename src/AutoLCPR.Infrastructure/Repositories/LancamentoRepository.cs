@@ -78,13 +78,15 @@ public class LancamentoRepository : ILancamentoRepository
         int? produtorId,
         CancellationToken cancellationToken)
     {
-        var queryLancamentos = CriarQueryFinanceiraBetween(dataInicio, dataFim, produtorId, null)
+        // A Dashboard é baseada em NotasFiscais; os relatórios devem usar a mesma fonte
+        // para evitar divergência após exclusões de notas.
+        var queryNotas = CriarQueryNotaFiscalEntreDatas(dataInicio, dataFim, produtorId, null)
             .Where(item => item.Tipo == tipo);
 
-        var existemLancamentos = await queryLancamentos.AnyAsync(cancellationToken);
-        if (existemLancamentos)
+        var existemNotas = await queryNotas.AnyAsync(cancellationToken);
+        if (existemNotas)
         {
-            var agrupadoLancamentos = await queryLancamentos
+            var agrupadoNotas = await queryNotas
                 .GroupBy(item => item.Data.Month)
                 .Select(group => new
                 {
@@ -93,13 +95,13 @@ public class LancamentoRepository : ILancamentoRepository
                 })
                 .ToListAsync(cancellationToken);
 
-            return agrupadoLancamentos.ToDictionary(item => item.Mes, item => item.Total);
+            return agrupadoNotas.ToDictionary(item => item.Mes, item => item.Total);
         }
 
-        var queryNotas = CriarQueryNotaFiscalEntreDatas(dataInicio, dataFim, produtorId, null)
+        var queryLancamentos = CriarQueryFinanceiraBetween(dataInicio, dataFim, produtorId, null)
             .Where(item => item.Tipo == tipo);
 
-        var agrupadoNotas = await queryNotas
+        var agrupadoLancamentos = await queryLancamentos
             .GroupBy(item => item.Data.Month)
             .Select(group => new
             {
@@ -108,7 +110,7 @@ public class LancamentoRepository : ILancamentoRepository
             })
             .ToListAsync(cancellationToken);
 
-        return agrupadoNotas.ToDictionary(item => item.Mes, item => item.Total);
+        return agrupadoLancamentos.ToDictionary(item => item.Mes, item => item.Total);
     }
 
     public async Task<decimal> ObterTotalPorTipoAsync(DateTime dataInicio, DateTime dataFim, TipoLancamento tipo, int? produtorId = null, CancellationToken cancellationToken = default)
@@ -123,34 +125,34 @@ public class LancamentoRepository : ILancamentoRepository
 
     public async Task<decimal> ObterTotalFinanceiroAsync(DateTime dataInicial, DateTime dataFinal, TipoLancamento tipo, int? produtorId = null, string? clienteFornecedorFiltro = null, CancellationToken cancellationToken = default)
     {
-        var queryLancamentos = CriarQueryFinanceiraBetween(dataInicial, dataFinal, produtorId, clienteFornecedorFiltro)
-            .Where(item => item.Tipo == tipo);
-
-        var existemLancamentos = await queryLancamentos.AnyAsync(cancellationToken);
-        if (existemLancamentos)
-        {
-            var totalLancamentos = await queryLancamentos.SumAsync(item => (double)item.Valor, cancellationToken);
-            return (decimal)totalLancamentos;
-        }
-
         var queryNotas = CriarQueryNotaFiscalEntreDatas(dataInicial, dataFinal, produtorId, clienteFornecedorFiltro)
             .Where(item => item.Tipo == tipo);
 
-        var totalNotas = await queryNotas.SumAsync(item => (double)item.Valor, cancellationToken);
-        return (decimal)totalNotas;
+        var existemNotas = await queryNotas.AnyAsync(cancellationToken);
+        if (existemNotas)
+        {
+            var totalNotasPreferencial = await queryNotas.SumAsync(item => (double)item.Valor, cancellationToken);
+            return (decimal)totalNotasPreferencial;
+        }
+
+        var queryLancamentos = CriarQueryFinanceiraBetween(dataInicial, dataFinal, produtorId, clienteFornecedorFiltro)
+            .Where(item => item.Tipo == tipo);
+
+        var totalLancamentos = await queryLancamentos.SumAsync(item => (double)item.Valor, cancellationToken);
+        return (decimal)totalLancamentos;
     }
 
     public async IAsyncEnumerable<Lancamento> StreamFinanceiroAsync(DateTime dataInicial, DateTime dataFinal, TipoLancamento tipo, int? produtorId = null, string? clienteFornecedorFiltro = null, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var queryLancamentos = CriarQueryFinanceiraBetween(dataInicial, dataFinal, produtorId, clienteFornecedorFiltro)
+        var queryNotas = CriarQueryNotaFiscalEntreDatas(dataInicial, dataFinal, produtorId, clienteFornecedorFiltro)
             .Where(item => item.Tipo == tipo)
             .OrderBy(item => item.Data)
             .AsNoTracking();
 
-        var existemLancamentos = await queryLancamentos.AnyAsync(cancellationToken);
-        if (existemLancamentos)
+        var existemNotas = await queryNotas.AnyAsync(cancellationToken);
+        if (existemNotas)
         {
-            await foreach (var item in queryLancamentos.AsAsyncEnumerable().WithCancellation(cancellationToken))
+            await foreach (var item in queryNotas.AsAsyncEnumerable().WithCancellation(cancellationToken))
             {
                 yield return item;
             }
@@ -158,12 +160,12 @@ public class LancamentoRepository : ILancamentoRepository
             yield break;
         }
 
-        var queryNotas = CriarQueryNotaFiscalEntreDatas(dataInicial, dataFinal, produtorId, clienteFornecedorFiltro)
+        var queryLancamentos = CriarQueryFinanceiraBetween(dataInicial, dataFinal, produtorId, clienteFornecedorFiltro)
             .Where(item => item.Tipo == tipo)
             .OrderBy(item => item.Data)
             .AsNoTracking();
 
-        await foreach (var item in queryNotas.AsAsyncEnumerable().WithCancellation(cancellationToken))
+        await foreach (var item in queryLancamentos.AsAsyncEnumerable().WithCancellation(cancellationToken))
         {
             yield return item;
         }
